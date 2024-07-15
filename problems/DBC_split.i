@@ -115,7 +115,7 @@ d = 8
     [./mat]
         type = GenericConstantMaterial
         prop_names  = 'M   kappa    alpha'
-        prop_values = '1e-02    5e-03   1e-01'
+        prop_values = '1e-0 1.6e-2 5e-1'
                         # M*mum_m^2/eV_J
                         # kappa*eV_J*mu_m^2
     [../]
@@ -155,8 +155,9 @@ d = 8
     # petsc_options_value = 'hypre    boomeramg'
   
     l_tol = 1e-3
+    l_abs_tol = 1e-9
     l_max_its = 100
-    nl_max_its = 20
+    nl_max_its = 15
     nl_abs_tol = 1e-8
     
     [./TimeStepper]
@@ -184,11 +185,11 @@ d = 8
 [Outputs]
     [ex]
         type = Exodus
-        file_base = ${n}_${d}
+        file_base = nm2_${n}_${d}
     []
     [csv]
         type = CSV
-        file_base = ${n}_${d}_e
+        file_base = nm2_${n}_${d}_e
     []
 []
 
