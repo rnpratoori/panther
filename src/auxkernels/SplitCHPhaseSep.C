@@ -26,7 +26,7 @@ SplitCHPhaseSep::validParams()
       "w", "Coupled chemical potential (if not specified kernel variable will be used)");
   params.addCoupledVar("c", "Concentration variable");
   params.addCoupledVar("bar_c", "Element average concentration variable");
-  params.addParam<MaterialPropertyName>("alpha_name", "The alpha used with the kernel");
+  params.addParam<MaterialPropertyName>("sigma_name", "The sigma used with the kernel");
   params.addParam<MaterialPropertyName>("kappa_name", "The kappa used with the kernel");
   return params;
 }
@@ -41,7 +41,7 @@ SplitCHPhaseSep::SplitCHPhaseSep(const InputParameters & parameters)
     _dmobdarg(_n_args),
     _c(coupledValue("c")),
     _bar_c(coupledValue("bar_c")),
-    _alpha(getMaterialProperty<Real>("alpha_name")),
+    _sigma(getMaterialProperty<Real>("sigma_name")),
     _kappa(getMaterialProperty<Real>("kappa_name"))
 {
   // Iterate over all coupled variables
@@ -64,7 +64,7 @@ Real
 SplitCHPhaseSep::computeQpResidual()
 {
   Real residual = _mob[_qp] * _grad_w[_qp] * _grad_test[_i][_qp]; //First term
-  residual += _mob[_qp] * _alpha[_qp] * _kappa[_qp] * (_c[_qp] - _bar_c[_qp]) * _test[_i][_qp];//; //Second term
+  residual += _mob[_qp] * _sigma[_qp] * (_c[_qp] - _bar_c[_qp]) * _test[_i][_qp];//; //Second term
   return residual;
 }
 
@@ -78,7 +78,7 @@ Real
 SplitCHPhaseSep::computeQpWJacobian()
 {
   Real jacobian = _mob[_qp] * _grad_phi[_j][_qp] * _grad_test[_i][_qp];
-  jacobian += _mob[_qp] * _alpha[_qp] * _kappa[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  jacobian += _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
   return jacobian;
 }
 
@@ -92,6 +92,6 @@ SplitCHPhaseSep::computeQpOffDiagJacobian(unsigned int jvar)
   // get the coupled variable jvar is referring to
   const unsigned int cvar = mapJvarToCvar(jvar);
   Real off_diag_jacobian = (*_dmobdarg[cvar])[_qp] * _phi[_j][_qp] * _grad_w[_qp] * _grad_test[_i][_qp];
-  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _alpha[_qp] * _kappa[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
   return off_diag_jacobian;
 }

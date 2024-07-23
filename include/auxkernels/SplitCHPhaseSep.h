@@ -55,6 +55,6 @@ protected:
   /// Variables for nonlocal contribution
   const VariableValue & _c;
   const VariableValue & _bar_c;
-  const MaterialProperty<Real> & _alpha;
+  const MaterialProperty<Real> & _sigma;
   const MaterialProperty<Real> & _kappa;
 };
