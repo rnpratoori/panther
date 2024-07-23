@@ -1,6 +1,10 @@
-n = 200     # number of elements per side
-d = 1000    # size of the sample in nm
-eps = 10    # interface width in nm
+n = 100     # number of elements per side
+d = 1       # ND size of the side
+D = 1       # actual size of the side in mum
+l = 8e-4    # Kuhn statistical length in mum
+a = 0.5     # type A monomer density
+chi = 0.077 # Flory-Huggins parameter
+N = 300     # Degree of polymerisation
 
 
 [Mesh]
@@ -9,8 +13,6 @@ eps = 10    # interface width in nm
     dim = 2
     nx = ${n}
     ny = ${n}
-    # nx = 25
-    # ny = 25
     xmax = ${d}  # nm
     ymax = ${d}  # nm
     # uniform_refine = 2
@@ -111,27 +113,30 @@ eps = 10    # interface width in nm
 []
   
 [Materials]
-    # Units of M are nm^3 / (kg s)
-    # Units of kappa are nm^2
-    # Units of sigma are / s
-    # scaling factor d is multiplied to f_loc, kappa and sigma
-    # and divided to 
-    # d = 1e-1
+    # All properties are non-dimensional
+    # In the ND formulation, M is 1.0
     [./mat]
         type = GenericFunctionMaterial
         prop_names  = 'M   kappa    sigma'
-        prop_values = '1e-0/1e-1 ${fparse (eps^2)*1e-1}  7.4e-2*1e-1'
-
+        prop_values = '1.0 ${fparse (l^2)/(3*a*(1-a)*chi*D^2)}
+                        ${fparse (36*D^2)/((l*a*(1-a)*N)^2)}'
     [../]
+    # # In ND formulation, kappa is square of
+    # # interface width
+    # [./kappa]
+    #     type = GenericFunctionMaterial
+    #     prop_names  = 'M   kappa    sigma'
+    #     prop_values = '1.0 ${fparse (eps^2)}  7.4e-2'
+    # [../]
     # free energy density function (nJ/mol/nm^2)
     # same as in CHMath
     [./local_energy]
         type = DerivativeParsedMaterial
         property_name = f_loc
         coupled_variables = u
-        constant_names = 'W1    d'
-        constant_expressions = '1/4 1e-1'
-        expression = 'W1*d*(u^2 - 1)^2'
+        constant_names = 'W1'
+        constant_expressions = '1/4'
+        expression = 'W1*(u^2 - 1)^2'
         derivative_order = 2
     [../]
 []
@@ -160,7 +165,7 @@ eps = 10    # interface width in nm
   
     l_tol = 1e-3
     l_abs_tol = 1e-9
-    l_max_its = 100
+    l_max_its = 50
     nl_max_its = 30
     nl_abs_tol = 1e-8
     
@@ -189,11 +194,11 @@ eps = 10    # interface width in nm
 [Outputs]
     [ex]
         type = Exodus
-        file_base = ad_nm_${n}_${d}
+        file_base = nm_${n}_${d}
     []
     [csv]
         type = CSV
-        file_base = ad_nm_${n}_${d}_e
+        file_base = nm_${n}_${d}_e
     []
 []
 
