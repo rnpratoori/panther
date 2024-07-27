@@ -1,10 +1,11 @@
-n = 100     # number of elements per side
+n = 200     # number of elements per side
 d = 1       # ND size of the side
 D = 1       # actual size of the side in mum
-l = 8e-4    # Kuhn statistical length in mum
+l = 1e-3    # Kuhn statistical length in mum
 a = 0.5     # type A monomer density
 chi = 0.077 # Flory-Huggins parameter
-N = 300     # Degree of polymerisation
+N = 150     # Degree of polymerisation
+s = 1e-0    # Scaling factor
 
 
 [Mesh]
@@ -13,8 +14,8 @@ N = 300     # Degree of polymerisation
     dim = 2
     nx = ${n}
     ny = ${n}
-    xmax = ${d}  # nm
-    ymax = ${d}  # nm
+    xmax = ${d}  # nd
+    ymax = ${d}  # nd
     # uniform_refine = 2
 []
   
@@ -118,8 +119,8 @@ N = 300     # Degree of polymerisation
     [./mat]
         type = GenericFunctionMaterial
         prop_names  = 'M   kappa    sigma'
-        prop_values = '1.0 ${fparse (l^2)/(3*a*(1-a)*chi*D^2)}
-                        ${fparse (36*D^2)/((l*a*(1-a)*N)^2)}'
+        prop_values = '${fparse 1.0/s} ${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
+                        ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
     [../]
     # # In ND formulation, kappa is square of
     # # interface width
@@ -136,7 +137,7 @@ N = 300     # Degree of polymerisation
         coupled_variables = u
         constant_names = 'W1'
         constant_expressions = '1/4'
-        expression = 'W1*(u^2 - 1)^2'
+        expression = 'W1*${s}*(u^2 - 1)^2'
         derivative_order = 2
     [../]
 []
@@ -165,17 +166,17 @@ N = 300     # Degree of polymerisation
   
     l_tol = 1e-3
     l_abs_tol = 1e-9
-    l_max_its = 50
+    l_max_its = 30
     nl_max_its = 30
     nl_abs_tol = 1e-8
     
     [./TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0
+        dt = 1.0e-4
         cutback_factor = 0.8
         growth_factor = 1.5
-        optimal_iterations = 7
+        optimal_iterations = 10
     [../]
   
     end_time = 1000.0 # seconds
