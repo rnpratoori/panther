@@ -78,7 +78,7 @@ Real
 SplitCHPhaseSep::computeQpWJacobian()
 {
   Real jacobian = _mob[_qp] * _grad_phi[_j][_qp] * _grad_test[_i][_qp];
-  jacobian += _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  // jacobian += - _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
   return jacobian;
 }
 
@@ -92,6 +92,6 @@ SplitCHPhaseSep::computeQpOffDiagJacobian(unsigned int jvar)
   // get the coupled variable jvar is referring to
   const unsigned int cvar = mapJvarToCvar(jvar);
   Real off_diag_jacobian = (*_dmobdarg[cvar])[_qp] * _phi[_j][_qp] * _grad_w[_qp] * _grad_test[_i][_qp];
-  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _phi[_j][_qp] * _sigma[_qp] * (_c[_qp] - _bar_c[_qp]) * _test[_i][_qp] + _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
   return off_diag_jacobian;
 }

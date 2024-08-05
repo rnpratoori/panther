@@ -1,10 +1,11 @@
 n = 200     # number of elements per side
 d = 1       # ND size of the side
-D = 1       # actual size of the side in mum
-l = 1e-3    # Kuhn statistical length in mum
+D = 1e+0    # actual size of the side in 0.1 mum
+l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.5     # type A monomer density
 chi = 0.077 # Flory-Huggins parameter
-N = 150     # Degree of polymerisation
+N = 300     # Degree of polymerisation
+M_in = 1    # Initial mobility, depends on swell ratio
 s = 1e-0    # Scaling factor
 
 
@@ -36,6 +37,20 @@ s = 1e-0    # Scaling factor
         order = FIRST
         family = LAGRANGE
     [../]
+    # Average
+    # [./m]
+    #     order = 
+[]
+
+[Functions]
+    # A ParsedFunction to define time dependent Mobility
+    [./mobility_func]
+        type = ParsedFunction
+        # symbol_names = 'M0'
+        # symbol_values = '1e-02'
+        expression = '${M_in}'
+        # expression = '${M_in} - (66/5)*t'
+    [../]
 []
   
 [AuxVariables]
@@ -48,6 +63,9 @@ s = 1e-0    # Scaling factor
     [./bar_u]
         order = CONSTANT
         family = MONOMIAL
+    [../]
+    # used to describe the exponential func to be used in ParsedMaterial
+    [./mobility_temp]
     [../]
     # Local free energy density (nJ/mol)
     [./f_density]
@@ -95,6 +113,13 @@ s = 1e-0    # Scaling factor
         v = u
         variable = bar_u
     [../]
+    # calculate M
+    [./mobility]
+        type = FunctionAux
+        variable = mobility_temp
+        function = 'mobility_func'
+        execute_on = timestep_begin
+    [../]
     # # calculate energy density from local and gradient energies (J/mol/mum^2)
     [./f_density]
         type = TotalFreeEnergy
@@ -118,9 +143,23 @@ s = 1e-0    # Scaling factor
     # In the ND formulation, M is 1.0
     [./mat]
         type = GenericFunctionMaterial
-        prop_names  = 'M   kappa    sigma'
-        prop_values = '${fparse 1.0/s} ${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
+        prop_names  = 'kappa    sigma'
+        prop_values = '${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
                         ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
+    [../]
+    # [./mat]
+    #     type = GenericFunctionMaterial
+    #     prop_names  = 'M   kappa    sigma'
+    #     prop_values = '${fparse 1.0/s} ${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
+    #                     ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
+    # [../]
+    [./mobility]
+        type = ParsedMaterial
+        property_name  = M
+        coupled_variables = mobility_temp
+        constant_names = 'M0'
+        constant_expressions = '1e-0'
+        expression = 'if((M0 * mobility_temp / ${s})<=0, 0, (M0 * mobility_temp / ${s}))'
     [../]
     # # In ND formulation, kappa is square of
     # # interface width
@@ -157,8 +196,8 @@ s = 1e-0    # Scaling factor
     scheme = bdf2
   
     # Preconditioning using the additive Schwartz method and LU decomposition
-    petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type'
-    petsc_options_value = 'asm      preonly       lu          '
+    petsc_options_iname = '-pc_type -ksp_grmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    petsc_options_value = 'asm      31                  preonly       lu           2'
   
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
@@ -179,7 +218,7 @@ s = 1e-0    # Scaling factor
         optimal_iterations = 10
     [../]
   
-    end_time = 1000.0 # seconds
+    end_time = 1.0 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -195,11 +234,12 @@ s = 1e-0    # Scaling factor
 [Outputs]
     [ex]
         type = Exodus
-        file_base = nm_${n}_${d}
+        file_base = neg_${d}_${M_in}
+        time_step_interval = 1
     []
     [csv]
         type = CSV
-        file_base = nm_${n}_${d}_e
+        file_base = neg_${d}_${M_in}_e
     []
 []
 
