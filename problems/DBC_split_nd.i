@@ -1,11 +1,11 @@
-n = 200     # number of elements per side
+n = 400     # number of elements per side
 d = 1       # ND size of the side
 D = 1       # actual size of the side in mum
 l = 1e-3    # Kuhn statistical length in mum
 a = 0.5     # type A monomer density
 chi = 0.077 # Flory-Huggins parameter
-N = 150     # Degree of polymerisation
-s = 1e-0    # Scaling factor
+N = 300     # Degree of polymerisation
+s = 1e+2    # Scaling factor
 
 
 [Mesh]
@@ -27,8 +27,8 @@ s = 1e-0    # Scaling factor
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = -0.1
-            max =  0.1
+            min = ${fparse a-0.5-0.1}
+            max = ${fparse a-0.5+0.1}
         [../]
     [../]
     # Chemical potential (nJ/mol)
@@ -179,7 +179,7 @@ s = 1e-0    # Scaling factor
         optimal_iterations = 10
     [../]
   
-    end_time = 1000.0 # seconds
+    end_time = 1.0 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -193,13 +193,14 @@ s = 1e-0    # Scaling factor
 []
   
 [Outputs]
+    # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
-        file_base = nm_${n}_${d}
+        file_base = /Users/rnp/panther/d/nm_${d}
     []
     [csv]
         type = CSV
-        file_base = nm_${n}_${d}_e
+        file_base = /Users/rnp/panther/d/nm_${d}
     []
 []
 
