@@ -1,4 +1,4 @@
-n = 200     # number of elements per side
+n = 400     # number of elements per side
 d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum
 l = 1e-3    # Kuhn statistical length in 0.1 mum
@@ -6,7 +6,7 @@ a = 0.5     # type A monomer density
 chi = 0.077 # Flory-Huggins parameter
 N = 300     # Degree of polymerisation
 M_in = 1    # Initial mobility, depends on swell ratio
-s = 1e-0    # Scaling factor
+s = 1e+2    # Scaling factor
 
 
 [Mesh]
@@ -28,8 +28,8 @@ s = 1e-0    # Scaling factor
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = -0.1
-            max =  0.1
+            min = ${fparse a-0.5-0.1}
+            max = ${fparse a-0.5+0.1}
         [../]
     [../]
     # Chemical potential (nJ/mol)
@@ -232,6 +232,7 @@ s = 1e-0    # Scaling factor
 []
   
 [Outputs]
+    # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
         file_base = neg_${d}_${M_in}
