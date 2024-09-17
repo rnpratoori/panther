@@ -25,7 +25,7 @@ SplitCHPhaseSep::validParams()
   params.addCoupledVar(
       "w", "Coupled chemical potential (if not specified kernel variable will be used)");
   params.addCoupledVar("c", "Concentration variable");
-  params.addCoupledVar("bar_c", "Element average concentration variable");
+  params.addCoupledVar("m", "Overall concentration");
   params.addParam<MaterialPropertyName>("sigma_name", "The sigma used with the kernel");
   params.addParam<MaterialPropertyName>("kappa_name", "The kappa used with the kernel");
   return params;
@@ -40,7 +40,7 @@ SplitCHPhaseSep::SplitCHPhaseSep(const InputParameters & parameters)
     _grad_w(_is_coupled ? coupledGradient("w") : _grad_u),
     _dmobdarg(_n_args),
     _c(coupledValue("c")),
-    _bar_c(coupledValue("bar_c")),
+    m(coupledValue("m")),
     _sigma(getMaterialProperty<Real>("sigma_name")),
     _kappa(getMaterialProperty<Real>("kappa_name"))
 {
@@ -64,7 +64,7 @@ Real
 SplitCHPhaseSep::computeQpResidual()
 {
   Real residual = _mob[_qp] * _grad_w[_qp] * _grad_test[_i][_qp]; //First term
-  residual += _mob[_qp] * _sigma[_qp] * (_c[_qp]) * _test[_i][_qp];//; //Second term
+  residual += _mob[_qp] * _sigma[_qp] * (_c[_qp] - m[_qp]) * _test[_i][_qp];//; //Second term
   return residual;
 }
 
@@ -91,6 +91,6 @@ SplitCHPhaseSep::computeQpOffDiagJacobian(unsigned int jvar)
   // get the coupled variable jvar is referring to
   const unsigned int cvar = mapJvarToCvar(jvar);
   Real off_diag_jacobian = (*_dmobdarg[cvar])[_qp] * _phi[_j][_qp] * _grad_w[_qp] * _grad_test[_i][_qp];
-  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _sigma[_qp] * _phi[_j][_qp] * (_c[_qp]) * _test[_i][_qp] + _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  off_diag_jacobian += (*_dmobdarg[cvar])[_qp] * _sigma[_qp] * _phi[_j][_qp] * (_c[_qp] - m[_qp]) * _test[_i][_qp] + _mob[_qp] * _sigma[_qp] * _phi[_j][_qp] * _test[_i][_qp];
   return off_diag_jacobian;
 }

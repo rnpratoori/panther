@@ -5,8 +5,8 @@ l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.5     # type A monomer density
 chi = 0.077 # Flory-Huggins parameter
 N = 300     # Degree of polymerisation
-M_in = 1    # Initial mobility, depends on swell ratio
-s = 1e+2    # Scaling factor
+M_in = 4    # Initial mobility, depends on swell ratio
+s = 1e+4    # Scaling factor
 
 
 [Mesh]
@@ -28,8 +28,8 @@ s = 1e+2    # Scaling factor
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = ${fparse a-0.5-0.1}
-            max = ${fparse a-0.5+0.1}
+            min = ${fparse 2*(a-0.5)-0.1}
+            max = ${fparse 2*(a-0.5)+0.1}
         [../]
     [../]
     # Chemical potential (nJ/mol)
@@ -48,8 +48,8 @@ s = 1e+2    # Scaling factor
         type = ParsedFunction
         # symbol_names = 'M0'
         # symbol_values = '1e-02'
-        expression = '${M_in}'
-        # expression = '${M_in} - (66/5)*t'
+        # expression = '${M_in}'
+        expression = '(${M_in} - (6600/5)*t)/1'
     [../]
 []
   
@@ -59,11 +59,16 @@ s = 1e+2    # Scaling factor
         # order = FIRST
         # family = LAGRANGE
     [../]
-    # average u
-    [./bar_u]
+    # segment number fraction
+    [./m]
         order = CONSTANT
         family = MONOMIAL
     [../]
+    # # average u
+    # [./bar_u]
+    #     order = CONSTANT
+    #     family = MONOMIAL
+    # [../]
     # used to describe the exponential func to be used in ParsedMaterial
     [./mobility_temp]
     [../]
@@ -86,7 +91,7 @@ s = 1e+2    # Scaling factor
         variable = w
         mob_name = M
         c = u
-        bar_c = bar_u
+        m = m
         sigma_name = sigma
         kappa_name = kappa
     [../]
@@ -107,12 +112,18 @@ s = 1e+2    # Scaling factor
         coupled_variables = 'u'
         expression = '(u+1)/2'
     [../]
-    # calculate bar_u
-    [./bar_u]
-        type = ProjectionAux
-        v = u
-        variable = bar_u
+    # assign segment number fraction
+    [./m]
+        type = ParsedAux
+        variable = m
+        expression = '2*${a} - 1'
     [../]
+    # # calculate bar_u
+    # [./bar_u]
+    #     type = ProjectionAux
+    #     v = u
+    #     variable = bar_u
+    # [../]
     # calculate M
     [./mobility]
         type = FunctionAux
@@ -196,8 +207,8 @@ s = 1e+2    # Scaling factor
     scheme = bdf2
   
     # Preconditioning using the additive Schwartz method and LU decomposition
-    petsc_options_iname = '-pc_type -ksp_grmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm      31                  preonly       lu           2'
+    petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    petsc_options_value = 'asm                  preonly       lu           2'
   
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
@@ -235,12 +246,12 @@ s = 1e+2    # Scaling factor
     # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
-        file_base = neg_${d}_${M_in}
+        file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}
         time_step_interval = 1
     []
     [csv]
         type = CSV
-        file_base = neg_${d}_${M_in}_e
+        file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}_e
     []
 []
 
