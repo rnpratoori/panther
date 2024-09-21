@@ -1,6 +1,7 @@
-panther
+PANTHER
 =====
 
-Fork "panther" to create a new MOOSE-based application.
+<ins>P<\ins>hase-separation <ins>AN<\ins>alysis <ins>T<ins>ool for <ins>H<\ins>eterogeneous polym<ins>ER<\ins>s (PANTHER) is a MOOSE-based application for studying phase separation behavior in block copolymers and crosslinked polymers.
 
-For more information see: [https://mooseframework.org/getting_started/new_users.html#create-an-app](https://mooseframework.org/getting_started/new_users.html#create-an-app)
+# Compilation instructions:
+
