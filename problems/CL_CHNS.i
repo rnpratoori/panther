@@ -3,11 +3,14 @@ d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum
 l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.5     # type A monomer density
-chi = 0.077 # Flory-Huggins parameter
+# chi = 0.077 # Flory-Huggins parameter
 N = 300     # Degree of polymerisation
 M_in = 4    # Initial mobility, depends on swell ratio
 s = 1e+4    # Scaling factor
 
+N2 = 30
+N1 = 3000
+E = 0.4e6
 
 [Mesh]
     # generate a 2D mesh
@@ -37,40 +40,11 @@ s = 1e+4    # Scaling factor
         order = FIRST
         family = LAGRANGE
     [../]
-    # Average
-    # [./m]
-    #     order = 
 []
 
-[Functions]
-    # A ParsedFunction to define time dependent Mobility
-    [./mobility_func]
-        type = ParsedFunction
-        # symbol_names = 'M0'
-        # symbol_values = '1e-02'
-        # expression = '${M_in}'
-        expression = '(${M_in} - (6600/5)*t)/1'
-    [../]
-[]
-  
 [AuxVariables]
     # polymer volume fraction
     [./pvf]
-        # order = FIRST
-        # family = LAGRANGE
-    [../]
-    # segment number fraction
-    [./m]
-        order = CONSTANT
-        family = MONOMIAL
-    [../]
-    # # average u
-    # [./bar_u]
-    #     order = CONSTANT
-    #     family = MONOMIAL
-    # [../]
-    # used to describe the exponential func to be used in ParsedMaterial
-    [./mobility_temp]
     [../]
     # Local free energy density (nJ/mol)
     [./f_density]
@@ -87,18 +61,14 @@ s = 1e+4    # Scaling factor
     [../]
     # adding nonlocal term to the energy
     [./coupled_res]
-        type = SplitCHPhaseSep
+        type = SplitCHWRes
         variable = w
         mob_name = M
-        c = u
-        m = m
-        sigma_name = sigma
-        kappa_name = kappa
     [../]
     [./coupled_parsed]
         type = SplitCHParsed
         variable = u
-        f_name = f_loc
+        f_name = f_tot
         kappa_name = kappa
         w = w
     [../]
@@ -108,34 +78,15 @@ s = 1e+4    # Scaling factor
     # calculate polymer volume fraction from difference in volume fractions
     [./pvf]
         type = ParsedAux
-        variable = pvf
+        variable = phi
         coupled_variables = 'u'
         expression = '(u+1)/2'
     [../]
-    # assign segment number fraction
-    [./m]
-        type = ParsedAux
-        variable = m
-        expression = '2*${a} - 1'
-    [../]
-    # # calculate bar_u
-    # [./bar_u]
-    #     type = ProjectionAux
-    #     v = u
-    #     variable = bar_u
-    # [../]
-    # calculate M
-    [./mobility]
-        type = FunctionAux
-        variable = mobility_temp
-        function = 'mobility_func'
-        execute_on = timestep_begin
-    [../]
-    # # calculate energy density from local and gradient energies (J/mol/mum^2)
+    # calculate energy density from local and gradient energies (J/mol/mum^2)
     [./f_density]
         type = TotalFreeEnergy
         variable = f_density
-        f_name = 'f_loc'
+        f_name = 'f_tot'
         kappa_names = 'kappa'
         interfacial_vars = u
     [../]
@@ -154,40 +105,62 @@ s = 1e+4    # Scaling factor
     # In the ND formulation, M is 1.0
     [./mat]
         type = GenericFunctionMaterial
-        prop_names  = 'kappa    sigma'
-        prop_values = '${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
-                        ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
+        prop_names  = 'M   kappa'
+        prop_values = '${fparse 1.0/s} ${fparse 0.1/s}'
     [../]
-    # [./mat]
-    #     type = GenericFunctionMaterial
-    #     prop_names  = 'M   kappa    sigma'
-    #     prop_values = '${fparse 1.0/s} ${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
-    #                     ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
-    # [../]
-    [./mobility]
-        type = ParsedMaterial
-        property_name  = M
-        coupled_variables = mobility_temp
-        constant_names = 'M0'
-        constant_expressions = '1e-0'
-        expression = 'if((M0 * mobility_temp / ${s})<=0, 0, (M0 * mobility_temp / ${s}))'
+    # polymer volume fraction
+    # defined for convenience
+    [./pvf]
+        type = DerivativeParsedMaterial
+        property_name = phi
+        coupled_variables = 'u'
+        expression = '(u+1)/2'
+        derivative_order = 2
     [../]
-    # # In ND formulation, kappa is square of
-    # # interface width
-    # [./kappa]
-    #     type = GenericFunctionMaterial
-    #     prop_names  = 'M   kappa    sigma'
-    #     prop_values = '1.0 ${fparse (eps^2)}  7.4e-2'
-    # [../]
+    # Flory-Huggins parameter
+    # dependent on polymer volume fraction
+    [./chi]
+        type = DerivativeParsedMaterial
+        property_name = chi
+        coupled_variables = 'u'
+        expression = '${fparse (-1/(N2*phi^2))*(ln(1-phi)+phi+nc*vs*((1/phi)-(phi/2)))}'
+        derivative_order = 2
+    [../]
     # free energy density function (nJ/mol/nm^2)
-    # same as in CHMath
+    # local energy as a double well potential
     [./local_energy]
         type = DerivativeParsedMaterial
         property_name = f_loc
-        coupled_variables = u
+        coupled_variables = 'u'
         constant_names = 'W1'
         constant_expressions = '1/4'
         expression = 'W1*${s}*(u^2 - 1)^2'
+        derivative_order = 2
+    [../]
+    # mixing energy based on 
+    # Flory-Huggins theory
+    [./mixing_energy]
+        type = DerivativeParsedMaterial
+        property_name = f_mix
+        coupled_variables = 'u'
+        expression = '${fparse s*(RT/phi)*((phi*ln(phi))/V1+((1-phi)*ln(1-phi))/V2+(chi*phi*(1-phi))/vr)}'
+        derivative_order = 2
+    [../]
+    # elastic energy
+    [../elastic_energy]
+        type = DerivativeParsedMaterial
+        property_name = f_el
+        coupled_variables = 'u'
+        expression = '${fparse s*(E/2)*(1/(phi^(2/3))-1)}'
+        derivative_order = 2
+    [../]
+    # total free energy
+    # sum of local, mixing and elastic energy
+    [../free_energy]
+        type = DerivativeSumMaterial
+        property_name = f_tot
+        coupled_variables = 'u'
+        sum_materials = 'f_loc f_mix f_el'
         derivative_order = 2
     [../]
 []
@@ -258,4 +231,3 @@ s = 1e+4    # Scaling factor
 # [Debug]
 #     show_var_residual_norms = true
 # []
-  

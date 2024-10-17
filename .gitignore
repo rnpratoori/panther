@@ -327,3 +327,7 @@ share/
 /tutorials/tutorial01_app_development/*/babbler.yaml
 /tutorials/darcy_thermo_mech/*/darcy_thermo_mech.yaml
 panther.yaml
+
+# Additional files or directories
+/problems/output_dump
+*Zone.Identifier*

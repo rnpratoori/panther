@@ -1,11 +1,11 @@
-n = 400     # number of elements per side
+n = 200     # number of elements per side
 d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum
 l = 1e-3    # Kuhn statistical length in 0.1 mum
-a = 0.5     # type A monomer density
-chi = 0.077 # Flory-Huggins parameter
-N = 300     # Degree of polymerisation
-M_in = 4    # Initial mobility, depends on swell ratio
+a = a_val   # type A monomer density
+chi = x_val # Flory-Huggins parameter
+N = N_val   # Degree of polymerisation
+M_in = 1    # Initial mobility, depends on swell ratio
 s = 1e+4    # Scaling factor
 
 
@@ -48,8 +48,8 @@ s = 1e+4    # Scaling factor
         type = ParsedFunction
         # symbol_names = 'M0'
         # symbol_values = '1e-02'
-        # expression = '${M_in}'
-        expression = '(${M_in} - (6600/5)*t)/1'
+        expression = '${M_in}'
+        # expression = '(${M_in} - (6600/5)*t)/1'
     [../]
 []
   
@@ -246,12 +246,13 @@ s = 1e+4    # Scaling factor
     # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
-        # file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}
-        time_step_interval = 1
+        file_base = nd_a${a}_x${chi}_N${N}
+        time_step_interval = 5
+        execute_on = 'TIMESTEP_END FINAL'
     []
     [csv]
         type = CSV
-        # file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}_e
+        file_base = nd_a${a}_x${chi}_N${N}_e
     []
 []
 
