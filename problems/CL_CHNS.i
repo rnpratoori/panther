@@ -1,25 +1,27 @@
-n = 500     # number of elements per side
-d = 1e-3       # ND size of the side
+n = 250     # number of elements per side
+d_f = 1e5
+d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.05     # type A monomer density
-chi = 3.6 # Flory-Huggins parameter
+a = 0.03     # type A monomer density
+chi = 3.8 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
-# M_in = 4    # Initial mobility, depends on swell ratio
-s = 1e-10    # Scaling factor
+M = ${fparse d_f^3*2.44e-17}    # Initial mobility, depends on swell ratio
+k = ${fparse d_f*9e-5}
+s = 1e0    # Scaling factor
 
-N2 = 1
-N1 = 1
+N2 = 100
+N1 = 100
 E = 8e-6  #
 # nc = 3e-16   # V33
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
 # vs = 81.2e12   # DM-100-030
-R = 8.314   # Universal gas constant
-T = 200     # Temperature in Kelvin
+R = ${fparse d_f^2*8.314}   # Universal gas constant
+T = 436     # Temperature in Kelvin
 
 # V1 = ${fparse N1*vr}  # Volume
 # V2 = ${fparse N2*vs}
-eps = 1e-5
+eps = ${fparse d_f*1e-3}
 
 
 [Mesh]
@@ -30,7 +32,7 @@ eps = 1e-5
     ny = ${n}
     xmax = ${d}  # nd
     ymax = ${d}  # nd
-    # uniform_refine = 2
+    uniform_refine = 2
 []
   
 [Variables]
@@ -41,8 +43,8 @@ eps = 1e-5
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = ${fparse 2*(a-0.5)-0.005}
-            max = ${fparse 2*(a-0.5)+0.005}
+            min = ${fparse 2*(a-0.5)-0.01}
+            max = ${fparse 2*(a-0.5)+0.01}
         [../]
     [../]
     # Chemical potential (nJ/mol)
@@ -125,7 +127,7 @@ eps = 1e-5
     [./mat]
         type = GenericFunctionMaterial
         prop_names  = 'M   kappa'
-        prop_values = '${fparse 1.74e-17/s} ${fparse 4.5e-5*s}'
+        prop_values = '${fparse M/s} ${fparse k*s}'
     [../]
     # polymer volume fraction
     # defined for convenience
@@ -183,7 +185,7 @@ eps = 1e-5
         coupled_variables = 'u'
         material_property_names = 'phi'
         constant_names =        'R      T       N1      N2      s       sw      chi'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    7       ${chi}'
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}'
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
         expression = 's*(R*T)*((sw*phi*log(sw*phi))/N1+((1-sw*phi)*log(1-sw*phi))/N2+
                         (chi*sw*phi*(1-sw*phi)))'
@@ -233,32 +235,32 @@ eps = 1e-5
     # petsc_options_iname = '-pc_type -pc_hypre_type'
     # petsc_options_value = 'hypre    boomeramg'
   
-    # l_tol = 1e-6
-    # l_abs_tol = 1e-9
+    l_tol = 1e-6
+    l_abs_tol = 1e-9
     l_max_its = 30
     nl_max_its = 30
-    # nl_abs_tol = 1e-9
+    nl_abs_tol = 1e-9
     
     [./TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0
+        dt = 1.0e-4
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     [../]
   
-    end_time = 600 # seconds
+    end_time = 3600 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
     scaling_group_variables = 'u w'
   
-    # [./Adaptivity]
-    #   coarsen_fraction = 0.1
-    #   refine_fraction = 0.7
-    #   max_h_level = 2
-    # [../]
+    [./Adaptivity]
+      coarsen_fraction = 0.1
+      refine_fraction = 0.7
+      max_h_level = 2
+    [../]
 []
   
 [Outputs]
