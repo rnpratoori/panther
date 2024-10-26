@@ -1,18 +1,19 @@
-n = 250     # number of elements per side
+n = 200     # number of elements per side
 d_f = 1e5
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.03     # type A monomer density
+a = 0.4     # type A monomer density
 chi = 3.8 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
-M = ${fparse d_f^3*2.44e-17}    # Initial mobility, depends on swell ratio
-k = ${fparse d_f*9e-5}
+M = ${fparse d_f^2*2.44e-17}    # Initial mobility, depends on swell ratio
+k = ${fparse d_f^2*9e-5}
 s = 1e0    # Scaling factor
+ev_J = 6.24e+18
 
-N2 = 100
-N1 = 100
-E = 8e-6  #
+N2 = 1
+N1 = 1
+# E = 8e-6  #
 # nc = 3e-16   # V33
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
 # vs = 81.2e12   # DM-100-030
@@ -21,7 +22,7 @@ T = 436     # Temperature in Kelvin
 
 # V1 = ${fparse N1*vr}  # Volume
 # V2 = ${fparse N2*vs}
-eps = ${fparse d_f*1e-3}
+eps = ${fparse d_f*1e-6}
 
 
 [Mesh]
@@ -55,9 +56,9 @@ eps = ${fparse d_f*1e-3}
 []
 
 [AuxVariables]
-    # # polymer volume fraction
-    # [./pvf]
-    # [../]
+    # polymer volume fraction
+    [./pvf]
+    [../]
     # Local free energy density (nJ/mol)
     [./f_density]
         order = CONSTANT
@@ -98,13 +99,13 @@ eps = ${fparse d_f*1e-3}
 []
   
 [AuxKernels]
-    # # calculate polymer volume fraction from difference in volume fractions
-    # [./pvf]
-    #     type = ParsedAux
-    #     variable = phi
-    #     coupled_variables = 'u'
-    #     expression = '(u+1)/2'
-    # [../]
+    # calculate polymer volume fraction from difference in volume fractions
+    [./pvf]
+        type = ParsedAux
+        variable = pvf
+        coupled_variables = 'u'
+        expression = '(u+1)/2'
+    [../]
     # calculate energy density from local and gradient energies (J/mol/mum^2)
     [./f_density]
         type = TotalFreeEnergy
@@ -115,30 +116,30 @@ eps = ${fparse d_f*1e-3}
     [../]
 []
   
-[BCs]
-    [./Periodic]
-        [./all]
-        auto_direction = 'x y'
-        [../]
-    [../]
-[]
+# [BCs]
+#     [./Periodic]
+#         [./all]
+#         auto_direction = 'x y'
+#         [../]
+#     [../]
+# []
   
 [Materials]
     [./mat]
         type = GenericFunctionMaterial
         prop_names  = 'M   kappa'
-        prop_values = '${fparse M/s} ${fparse k*s}'
+        prop_values = '${fparse M/ev_J/s} ${fparse k*ev_J*s}'
     [../]
     # polymer volume fraction
     # defined for convenience
-    [./pvf]
-        type = DerivativeParsedMaterial
-        property_name = phi
-        coupled_variables = 'u'
-        expression = '(u+1)/2'
-        derivative_order = 2
-        # outputs = ex
-    [../]
+    # [./pvf]
+    #     type = DerivativeParsedMaterial
+    #     property_name = phi
+    #     coupled_variables = 'u'
+    #     expression = '(u+1)/2'
+    #     derivative_order = 2
+    #     outputs = ex
+    # [../]
     # # Flory-Huggins parameter
     # # dependent on polymer volume fraction
     # [./chi]
@@ -160,7 +161,7 @@ eps = ${fparse d_f*1e-3}
         coupled_variables = 'u'
         constant_names =        'W1    eps'
         constant_expressions =  '1/4    ${eps}'
-        expression = '(W1/eps^2)*${s}*(u^2 - 1)^2'
+        expression = '(W1/eps^2)*${ev_J}*${s}*(u^2 - 1)^2'
         derivative_order = 2
     [../]
     # # mixing energy based on 
@@ -183,32 +184,31 @@ eps = ${fparse d_f*1e-3}
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'u'
-        material_property_names = 'phi'
-        constant_names =        'R      T       N1      N2      s       sw      chi'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}'
+        constant_names =        'R      T       N1      N2      s       sw      chi     ev_J'
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}  ${ev_J}'
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
-        expression = 's*(R*T)*((sw*phi*log(sw*phi))/N1+((1-sw*phi)*log(1-sw*phi))/N2+
-                        (chi*sw*phi*(1-sw*phi)))'
+        expression = 's*ev_J*(R*T)*((sw*u*log(sw*u))/N1+((1-sw*u)*log(1-sw*u))/N2+
+                        (chi*sw*u*(1-sw*u)))'
         derivative_order = 2
     [../]
-    # elastic energy
-    [./elastic_energy]
-        type = DerivativeParsedMaterial
-        property_name = f_el
-        coupled_variables = 'u'
-        material_property_names = 'phi'
-        constant_names =        'E      s'
-        constant_expressions =  '${E}   ${s}'
-        expression = 's*(E/3)*(1/(phi^(2/3))-1)'
-        derivative_order = 2
-    [../]
+    # # elastic energy
+    # [./elastic_energy]
+    #     type = DerivativeParsedMaterial
+    #     property_name = f_el
+    #     coupled_variables = 'u'
+    #     material_property_names = 'phi'
+    #     constant_names =        'E      s'
+    #     constant_expressions =  '${E}   ${s}'
+    #     expression = 's*(E/3)*(1/(phi^(2/3))-1)'
+    #     derivative_order = 2
+    # [../]
     # total free energy
     # sum of local, mixing and elastic energy
     [./free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'u'
-        sum_materials = 'f_loc f_mix'
+        sum_materials = 'f_loc  f_mix'
         derivative_order = 2
     [../]
 []
@@ -219,6 +219,9 @@ eps = ${fparse d_f*1e-3}
         type = ElementIntegralVariablePostprocessor
         variable = f_density
         execute_on = 'initial timestep_end'
+    [../]
+    [./nodes]                 # Number of nodes in mesh
+        type = NumNodes
     [../]
 []
   
@@ -250,11 +253,11 @@ eps = ${fparse d_f*1e-3}
         optimal_iterations = 10
     [../]
   
-    end_time = 3600 # seconds
+    end_time = 10800 # seconds
 
-    # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'u w'
+    # # Automatic scaling for u and w
+    # automatic_scaling = true
+    # scaling_group_variables = 'u w'
   
     [./Adaptivity]
       coarsen_fraction = 0.1
