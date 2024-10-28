@@ -1,18 +1,18 @@
-n = 200     # number of elements per side
+n = 50     # number of elements per side
 d_f = 1e5
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.4     # type A monomer density
+a = 0.3     # type A monomer density
 chi = 3.8 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
 M = ${fparse d_f^2*2.44e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse d_f^2*9e-5}
-s = 1e0    # Scaling factor
+s = 1e-25    # Scaling factor
 ev_J = 6.24e+18
 
-N2 = 1
-N1 = 1
+N2 = 100
+N1 = 100
 # E = 8e-6  #
 # nc = 3e-16   # V33
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
@@ -56,9 +56,9 @@ eps = ${fparse d_f*1e-6}
 []
 
 [AuxVariables]
-    # polymer volume fraction
-    [./pvf]
-    [../]
+    # # polymer volume fraction
+    # [./pvf]
+    # [../]
     # Local free energy density (nJ/mol)
     [./f_density]
         order = CONSTANT
@@ -99,13 +99,13 @@ eps = ${fparse d_f*1e-6}
 []
   
 [AuxKernels]
-    # calculate polymer volume fraction from difference in volume fractions
-    [./pvf]
-        type = ParsedAux
-        variable = pvf
-        coupled_variables = 'u'
-        expression = '(u+1)/2'
-    [../]
+    # # calculate polymer volume fraction from difference in volume fractions
+    # [./pvf]
+    #     type = ParsedAux
+    #     variable = pvf
+    #     coupled_variables = 'u'
+    #     expression = '(u+1)/2'
+    # [../]
     # calculate energy density from local and gradient energies (J/mol/mum^2)
     [./f_density]
         type = TotalFreeEnergy
@@ -132,14 +132,14 @@ eps = ${fparse d_f*1e-6}
     [../]
     # polymer volume fraction
     # defined for convenience
-    # [./pvf]
-    #     type = DerivativeParsedMaterial
-    #     property_name = phi
-    #     coupled_variables = 'u'
-    #     expression = '(u+1)/2'
-    #     derivative_order = 2
-    #     outputs = ex
-    # [../]
+    [./pvf]
+        type = DerivativeParsedMaterial
+        property_name = phi
+        coupled_variables = 'u'
+        expression = '(u+1)/2'
+        derivative_order = 2
+        outputs = ex
+    [../]
     # # Flory-Huggins parameter
     # # dependent on polymer volume fraction
     # [./chi]
@@ -184,11 +184,12 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'u'
+        material_property_names = 'phi'
         constant_names =        'R      T       N1      N2      s       sw      chi     ev_J'
         constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}  ${ev_J}'
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
-        expression = 's*ev_J*(R*T)*((sw*u*log(sw*u))/N1+((1-sw*u)*log(1-sw*u))/N2+
-                        (chi*sw*u*(1-sw*u)))'
+        expression = 's*ev_J*(R*T)*((phi*log(phi))/N1+((1-phi)*log(1-phi))/N2+
+                        (chi*phi*(1-phi)))'
         derivative_order = 2
     [../]
     # # elastic energy
@@ -208,7 +209,7 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'u'
-        sum_materials = 'f_loc  f_mix'
+        sum_materials = 'f_loc'
         derivative_order = 2
     [../]
 []
