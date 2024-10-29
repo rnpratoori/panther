@@ -3,7 +3,7 @@ d_f = 1e5
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.3     # type A monomer density
+a = 0.5     # type A monomer density
 chi = 3.8 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
 M = ${fparse d_f^2*2.44e-17}    # Initial mobility, depends on swell ratio
@@ -11,8 +11,8 @@ k = ${fparse d_f^2*9e-5}
 s = 1e-25    # Scaling factor
 ev_J = 6.24e+18
 
-N2 = 100
-N1 = 100
+N2 = 1
+N1 = 1
 # E = 8e-6  #
 # nc = 3e-16   # V33
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
@@ -188,8 +188,8 @@ eps = ${fparse d_f*1e-6}
         constant_names =        'R      T       N1      N2      s       sw      chi     ev_J'
         constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}  ${ev_J}'
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
-        expression = 's*ev_J*(R*T)*((phi*log(phi))/N1+((1-phi)*log(1-phi))/N2+
-                        (chi*phi*(1-phi)))'
+        expression = 's*ev_J*(R*T)*((sw*phi*log(sw*phi))/N1+((1-sw*phi)*log(1-sw*phi))/N2+
+                        (chi*sw*phi*(1-sw*phi)))'
         derivative_order = 2
     [../]
     # # elastic energy
@@ -254,7 +254,7 @@ eps = ${fparse d_f*1e-6}
         optimal_iterations = 10
     [../]
   
-    end_time = 10800 # seconds
+    end_time = 108000 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
