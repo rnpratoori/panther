@@ -1,15 +1,16 @@
-n = 50     # number of elements per side
+n = 200     # number of elements per side
 d_f = 1e5
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.5     # type A monomer density
-chi = 3.8 # Flory-Huggins parameter
+a = 0.05     # type A monomer density
+chi = 2.9 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
-M = ${fparse d_f^2*2.44e-17}    # Initial mobility, depends on swell ratio
-k = ${fparse d_f^2*9e-5}
-s = 1e-25    # Scaling factor
-ev_J = 6.24e+18
+M = ${fparse d_f^5*6.52e-18}    # Initial mobility, depends on swell ratio
+k = ${fparse 4.5e-5/d_f}
+s = 1e-5    # Scaling factor
+# ev_J = 6.24e18
+ev_J = 1
 
 N2 = 1
 N1 = 1
@@ -17,7 +18,7 @@ N1 = 1
 # nc = 3e-16   # V33
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
 # vs = 81.2e12   # DM-100-030
-R = ${fparse d_f^2*8.314}   # Universal gas constant
+R = ${fparse 8.314}   # Universal gas constant
 T = 436     # Temperature in Kelvin
 
 # V1 = ${fparse N1*vr}  # Volume
@@ -44,8 +45,10 @@ eps = ${fparse d_f*1e-6}
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = ${fparse 2*(a-0.5)-0.01}
-            max = ${fparse 2*(a-0.5)+0.01}
+            min = ${fparse a-0.01}
+            max = ${fparse a+0.01}
+            # min = ${fparse 2*(a-0.5)-0.01}
+            # max = ${fparse 2*(a-0.5)+0.01}
         [../]
     [../]
     # Chemical potential (nJ/mol)
@@ -130,16 +133,16 @@ eps = ${fparse d_f*1e-6}
         prop_names  = 'M   kappa'
         prop_values = '${fparse M/ev_J/s} ${fparse k*ev_J*s}'
     [../]
-    # polymer volume fraction
-    # defined for convenience
-    [./pvf]
-        type = DerivativeParsedMaterial
-        property_name = phi
-        coupled_variables = 'u'
-        expression = '(u+1)/2'
-        derivative_order = 2
-        outputs = ex
-    [../]
+    # # polymer volume fraction
+    # # defined for convenience
+    # [./pvf]
+    #     type = DerivativeParsedMaterial
+    #     property_name = phi
+    #     coupled_variables = 'u'
+    #     expression = '(u+1)/2'
+    #     derivative_order = 2
+    #     outputs = ex
+    # [../]
     # # Flory-Huggins parameter
     # # dependent on polymer volume fraction
     # [./chi]
@@ -161,7 +164,7 @@ eps = ${fparse d_f*1e-6}
         coupled_variables = 'u'
         constant_names =        'W1    eps'
         constant_expressions =  '1/4    ${eps}'
-        expression = '(W1/eps^2)*${ev_J}*${s}*(u^2 - 1)^2'
+        expression = '(W1/eps^2)*${ev_J}*${s}*u^2*(u - 1)^2'
         derivative_order = 2
     [../]
     # # mixing energy based on 
@@ -184,12 +187,12 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'u'
-        material_property_names = 'phi'
+        # material_property_names = 'phi'
         constant_names =        'R      T       N1      N2      s       sw      chi     ev_J'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    9       ${chi}  ${ev_J}'
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    8.7       ${chi}  ${ev_J}'
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
-        expression = 's*ev_J*(R*T)*((sw*phi*log(sw*phi))/N1+((1-sw*phi)*log(1-sw*phi))/N2+
-                        (chi*sw*phi*(1-sw*phi)))'
+        expression = 's*ev_J*(R*T)*((sw*u*log(sw*u))/N1
+                    +((1-sw*u)*log(1-sw*u))/N2+(chi*sw*u*(1-sw*u)))'
         derivative_order = 2
     [../]
     # # elastic energy
@@ -209,7 +212,7 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'u'
-        sum_materials = 'f_loc'
+        sum_materials = 'f_mix'
         derivative_order = 2
     [../]
 []
@@ -231,13 +234,13 @@ eps = ${fparse d_f*1e-6}
     solve_type = 'NEWTON'
     scheme = bdf2
   
-    # Preconditioning using the additive Schwartz method and LU decomposition
-    petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm                  preonly       lu           2'
+    # # Preconditioning using the additive Schwartz method and LU decomposition
+    # petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    # petsc_options_value = 'asm                  preonly       lu           2'
   
-    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    # petsc_options_iname = '-pc_type -pc_hypre_type'
-    # petsc_options_value = 'hypre    boomeramg'
+    # Alternative preconditioning options using Hypre (algebraic multi-grid)
+    petsc_options_iname = '-pc_type -pc_hypre_type'
+    petsc_options_value = 'hypre    boomeramg'
   
     l_tol = 1e-6
     l_abs_tol = 1e-9
