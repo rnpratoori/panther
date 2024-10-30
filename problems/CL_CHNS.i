@@ -1,14 +1,14 @@
-n = 50     # number of elements per side
-d_f = 1e5
+n = 200     # number of elements per side
+d_f = 1e3
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.5     # type A monomer density
+a = 0.05     # type A monomer density
 chi = 2.9 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
 M = ${fparse d_f^5*6.52e-18}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}
-s = 1e-10    # Scaling factor
+s = 1e-8    # Scaling factor
 # ev_J = 6.24e18
 ev_J = 1
 
@@ -19,11 +19,11 @@ N1 = 1
 # vr = 81.2e12   # Considering V33 and DM-100-030 are similar
 # vs = 81.2e12   # DM-100-030
 R = ${fparse 8.314}   # Universal gas constant
-T = 436     # Temperature in Kelvin
+T = 453     # Temperature in Kelvin
 
 # V1 = ${fparse N1*vr}  # Volume
 # V2 = ${fparse N2*vs}
-eps = ${fparse d_f*1e-6}
+eps = ${fparse d_f*1e-5}
 
 
 [Mesh]
@@ -45,8 +45,8 @@ eps = ${fparse d_f*1e-6}
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = ${fparse a-0.1}
-            max = ${fparse a+0.1}
+            min = ${fparse a-0.01}
+            max = ${fparse a+0.01}
             # min = ${fparse 2*(a-0.5)-0.01}
             # max = ${fparse 2*(a-0.5)+0.01}
         [../]
@@ -212,7 +212,7 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'u'
-        sum_materials = 'f_loc'
+        sum_materials = 'f_mix'
         # derivative_order = 2
     [../]
 []
