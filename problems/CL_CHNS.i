@@ -1,14 +1,14 @@
-n = 200     # number of elements per side
+n = 50     # number of elements per side
 d_f = 1e5
 d = ${fparse d_f*1e-3}       # size of the side in mum
 # D = 1e+0    # actual size of the side in 1 mm
 # l = 1e-3    # Kuhn statistical length in 1 mm
-a = 0.05     # type A monomer density
+a = 0.5     # type A monomer density
 chi = 2.9 # Flory-Huggins parameter
 # N = 300     # Degree of polymerisation
 M = ${fparse d_f^5*6.52e-18}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}
-s = 1e-5    # Scaling factor
+s = 1e-10    # Scaling factor
 # ev_J = 6.24e18
 ev_J = 1
 
@@ -45,8 +45,8 @@ eps = ${fparse d_f*1e-6}
         [./InitialCondition]
             type = RandomIC
             seed = 123
-            min = ${fparse a-0.01}
-            max = ${fparse a+0.01}
+            min = ${fparse a-0.1}
+            max = ${fparse a+0.1}
             # min = ${fparse 2*(a-0.5)-0.01}
             # max = ${fparse 2*(a-0.5)+0.01}
         [../]
@@ -193,7 +193,7 @@ eps = ${fparse d_f*1e-6}
         # expression = 's*(R*T)*(((1-phi)*log(1-phi))/V2+
         expression = 's*ev_J*(R*T)*((sw*u*log(sw*u))/N1
                     +((1-sw*u)*log(1-sw*u))/N2+(chi*sw*u*(1-sw*u)))'
-        derivative_order = 2
+        # derivative_order = 2
     [../]
     # # elastic energy
     # [./elastic_energy]
@@ -212,8 +212,8 @@ eps = ${fparse d_f*1e-6}
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'u'
-        sum_materials = 'f_mix'
-        derivative_order = 2
+        sum_materials = 'f_loc'
+        # derivative_order = 2
     [../]
 []
   
@@ -234,13 +234,13 @@ eps = ${fparse d_f*1e-6}
     solve_type = 'NEWTON'
     scheme = bdf2
   
-    # # Preconditioning using the additive Schwartz method and LU decomposition
-    # petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    # petsc_options_value = 'asm                  preonly       lu           2'
+    # Preconditioning using the additive Schwartz method and LU decomposition
+    petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    petsc_options_value = 'asm                  preonly       lu           2'
   
-    # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    petsc_options_iname = '-pc_type -pc_hypre_type'
-    petsc_options_value = 'hypre    boomeramg'
+    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
+    # petsc_options_iname = '-pc_type -pc_hypre_type'
+    # petsc_options_value = 'hypre    boomeramg'
   
     l_tol = 1e-6
     l_abs_tol = 1e-9
@@ -251,7 +251,7 @@ eps = ${fparse d_f*1e-6}
     [./TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
