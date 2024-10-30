@@ -5,11 +5,11 @@ d_f = 1e6           # factor to convert to m from the chosen units
 s = 1e5             # Scaling factor
 
 # Simulation parameters
-n = 20       # number of elements per side
+n = 100     # number of elements per side
 d = ${fparse d_f*1e-3}          # size of the side
 
 # System parameters
-# a = 0.05    # type A monomer density
+a = 0.05    # type A monomer density
 chi = 2.9   # Flory-Huggins parameter
 N1 = 1      # Segment number for polymer
 N2 = 1      # Segment number for additive
@@ -44,15 +44,12 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 []
 
 [ICs]
-    [testIC]
-        type = BoundingBoxIC
+    [pvfIC]
+        type = RandomIC
         variable = c
-        x1 = 200
-        x2 = 800
-        y1 = 200
-        y2 = 800
-        inside = 0.0118
-        outside = 0.1030
+        seed = 123
+        min = ${fparse a-0.01}
+        max = ${fparse a+0.01}
     []
 []
 
@@ -95,13 +92,13 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
     [../]
 []
   
-[BCs]
-    [./Periodic]
-        [./all]
-            auto_direction = 'x y'
-        [../]
-    [../]
-[]
+# [BCs]
+#     [./Periodic]
+#         [./all]
+#             auto_direction = 'x y'
+#         [../]
+#     [../]
+# []
   
 [Materials]
     [./mat]
@@ -165,7 +162,7 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
         optimal_iterations = 10
     [../]
   
-    end_time = 108000 # seconds
+    end_time = 10800 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -179,11 +176,11 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 []
   
 [Outputs]
-    [ex]
+    [ex_noPBC]
         type = Exodus
         time_step_interval = 1
     []
-    [csv]
+    [csv_noPBC]
         type = CSV
     []
 []
