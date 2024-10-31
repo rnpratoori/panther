@@ -10,12 +10,12 @@ d = ${fparse d_f*1e-3}          # size of the side
 
 # System parameters
 a = 0.05    # type A monomer density
-chi = 2.9   # Flory-Huggins parameter
+chi = 3.6   # Flory-Huggins parameter
 N1 = 1      # Segment number for polymer
 N2 = 1      # Segment number for additive
 R = 8.314   # Universal gas constant
 T = 453     # Temperature in Kelvin
-M = ${fparse d_f^5*6.52e-18}    # Initial mobility, depends on swell ratio
+M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 
 
@@ -114,7 +114,7 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
         coupled_variables = 'c'
         constant_names =        'R      T       N1      N2      s       sw
                                 chi     ev_J    d_f'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    8.7
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    7.0
                                 ${chi}  ${ev_J} ${d_f}'
         expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
@@ -176,11 +176,11 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 []
   
 [Outputs]
-    [ex_noPBC]
+    [ex_noPBC_s3]
         type = Exodus
         time_step_interval = 1
     []
-    [csv_noPBC]
+    [csv_noPBC_s3]
         type = CSV
     []
 []
