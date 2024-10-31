@@ -17,6 +17,7 @@ R = 8.314   # Universal gas constant
 T = 453     # Temperature in Kelvin
 M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
+eps = ${fparse d_f*1e-4}        # interface width
 
 
 [Mesh]
@@ -106,6 +107,17 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
         prop_names  = 'M   kappa'
         prop_values = '${fparse M/ev_J/s} ${fparse k*ev_J*s}'
     [../]
+    # free energy density function (nJ/mol/nm^2)
+    # local energy as a double well potential
+    [./local_energy]
+        type = DerivativeParsedMaterial
+        property_name = f_loc
+        coupled_variables = 'c'
+        constant_names =        'W1    eps'
+        constant_expressions =  '1/4    ${eps}'
+        expression = '(W1/eps^2)*${ev_J}*${s}*c^2*(c - 1)^2'
+        derivative_order = 2
+    [../]
     # mixing energy based on 
     # Flory-Huggins theory
     [./mixing_energy]
@@ -118,6 +130,16 @@ k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
                                 ${chi}  ${ev_J} ${d_f}'
         expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
+        derivative_order = 2
+    [../]
+    # Total free energy
+    # Sum of all the parts
+    [./free_energy]
+        type = DerivativeSumMaterial
+        property_name = f_tot
+        coupled_variables = 'c'
+        sum_materials = 'f_loc f_mix'
+        derivative_order = 2
     [../]
 []
   
