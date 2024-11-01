@@ -18,7 +18,7 @@ T = 453     # Temperature in Kelvin
 M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 eps = ${fparse d_f*1e-4}        # interface width
-
+E = 8e6                         # Elastic modulus
 
 [Mesh]
     # generate a 2D mesh
@@ -132,13 +132,23 @@ eps = ${fparse d_f*1e-4}        # interface width
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
         derivative_order = 2
     [../]
+    # elastic energy
+    [./elastic_energy]
+        type = DerivativeParsedMaterial
+        property_name = f_el
+        coupled_variables = 'c'
+        constant_names =        'E      s'
+        constant_expressions =  '${E}   ${s}'
+        expression = 's*(E/3)*(1/(c^(2/3))-1)'
+        derivative_order = 2
+    [../]
     # Total free energy
     # Sum of all the parts
     [./free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c'
-        sum_materials = 'f_loc f_mix'
+        sum_materials = 'f_loc f_mix f_el'
         derivative_order = 2
     [../]
 []
