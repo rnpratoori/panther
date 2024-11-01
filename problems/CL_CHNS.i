@@ -195,17 +195,17 @@ eps = ${fparse d_f*1e-5}
                     +((1-sw*u)*log(1-sw*u))/N2+(chi*sw*u*(1-sw*u)))'
         # derivative_order = 2
     [../]
-    # # elastic energy
-    # [./elastic_energy]
-    #     type = DerivativeParsedMaterial
-    #     property_name = f_el
-    #     coupled_variables = 'u'
-    #     material_property_names = 'phi'
-    #     constant_names =        'E      s'
-    #     constant_expressions =  '${E}   ${s}'
-    #     expression = 's*(E/3)*(1/(phi^(2/3))-1)'
-    #     derivative_order = 2
-    # [../]
+    # elastic energy
+    [./elastic_energy]
+        type = DerivativeParsedMaterial
+        property_name = f_el
+        coupled_variables = 'u'
+        material_property_names = 'phi'
+        constant_names =        'E      s'
+        constant_expressions =  '${E}   ${s}'
+        expression = 's*(E/3)*(1/(phi^(2/3))-1)'
+        derivative_order = 2
+    [../]
     # total free energy
     # sum of local, mixing and elastic energy
     [./free_energy]
