@@ -2,7 +2,7 @@
 # ev_J = 6.24e18    # Coversion of energy
 ev_J = 1
 d_f = 1e6           # factor to convert to m from the chosen units
-s = 1e5             # Scaling factor
+s = 1e-5            # Scaling factor
 
 # Simulation parameters
 n = 100     # number of elements per side
@@ -10,15 +10,17 @@ d = ${fparse d_f*1e-3}          # size of the side
 
 # System parameters
 a = 0.05    # type A monomer density
-chi = 3.6   # Flory-Huggins parameter
-N1 = 1      # Segment number for polymer
-N2 = 1      # Segment number for additive
+# chi = 8e-3  # Flory-Huggins parameter
+N1 = 1000   # Segment number for elastomer matrix (very large number)
+N2 = 87.7   # Segment number for silicon fluid (DPDM-005-088)
 R = 8.314   # Universal gas constant
 T = 453     # Temperature in Kelvin
+E = 0.14e6  # Elastic modulus (V31-151)
+nc = 3e-4   # crosslink density (V31-151)
 M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 eps = ${fparse d_f*1e-4}        # interface width
-E = 8e6                         # Elastic modulus
+vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
 
 [Mesh]
     # generate a 2D mesh
@@ -107,6 +109,18 @@ E = 8e6                         # Elastic modulus
         prop_names  = 'M   kappa'
         prop_values = '${fparse M/ev_J/s} ${fparse k*ev_J*s}'
     [../]
+    # Flory-Huggins parameter
+    # dependent on polymer volume fraction
+    [./chi]
+        type = DerivativeParsedMaterial
+        property_name = chi
+        coupled_variables = 'c'
+        constant_names =        'N2      vs     nc      s'
+        constant_expressions = '${N2}   ${vs}   ${nc}   ${s}'
+        expression = '(-1/(N2*c^2))*(log(1-c)+c+nc*vs*((1/c)-(c/2)))'
+        derivative_order = 2
+        # outputs = ex
+    [../]
     # free energy density function (nJ/mol/nm^2)
     # local energy as a double well potential
     [./local_energy]
@@ -124,10 +138,11 @@ E = 8e6                         # Elastic modulus
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
+        material_property_names = 'chi'
         constant_names =        'R      T       N1      N2      s       sw
-                                chi     ev_J    d_f'
+                                ev_J    d_f'
         constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    7.0
-                                ${chi}  ${ev_J} ${d_f}'
+                                ${ev_J} ${d_f}'
         expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
         derivative_order = 2
@@ -208,11 +223,11 @@ E = 8e6                         # Elastic modulus
 []
   
 [Outputs]
-    [ex_noPBC_s3]
+    [ex_noPBC_new]
         type = Exodus
         time_step_interval = 1
     []
-    [csv_noPBC_s3]
+    [csv_noPBC_new]
         type = CSV
     []
 []
