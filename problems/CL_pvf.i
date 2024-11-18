@@ -2,14 +2,14 @@
 # ev_J = 6.24e18    # Coversion of energy
 ev_J = 1
 d_f = 1e6           # factor to convert to m from the chosen units
-s = 1e+5            # Scaling factor
+s = 1e+10           # Scaling factor
 
 # Simulation parameters
-n = 100     # number of elements per side
-d = ${fparse d_f*5e-4}          # size of the side
+n = 050     # number of elements per side
+d = ${fparse d_f*5e-3}          # size of the side
 
 # System parameters
-a = 0.05    # type A monomer density
+a = 0.45    # type A monomer density
 chi = 8e-3  # Flory-Huggins parameter
 N1 = 1000   # Segment number for elastomer matrix (very large number)
 N2 = 87.7   # Segment number for silicon fluid (DPDM-005-088)
@@ -18,9 +18,9 @@ T = 300     # Temperature in Kelvin
 E = 0.5e6   # Elastic modulus (V31-151)
 # nc = 3e-4   # crosslink density (V31-151)
 M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
-k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
-eps = ${fparse d_f*1e-5}        # interface width
-# vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
+k = ${fparse 1e-8/d_f}         # gradient energy coefficient
+eps = ${fparse d_f*1e-4}        # interface width
+vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
 
 [Mesh]
     # generate a 2D mesh
@@ -51,8 +51,8 @@ eps = ${fparse d_f*1e-5}        # interface width
         type = RandomIC
         variable = c
         seed = 123
-        min = ${fparse a-0.01}
-        max = ${fparse a+0.01}
+        min = ${fparse a-0.05}
+        max = ${fparse a+0.05}
     []
 []
 
@@ -95,13 +95,13 @@ eps = ${fparse d_f*1e-5}        # interface width
     [../]
 []
   
-# [BCs]
-#     [./Periodic]
-#         [./all]
-#             auto_direction = 'x y'
-#         [../]
-#     [../]
-# []
+[BCs]
+    [./Periodic]
+        [./all]
+            auto_direction = 'x y'
+        [../]
+    [../]
+[]
   
 [Materials]
     [./mat]
@@ -141,7 +141,7 @@ eps = ${fparse d_f*1e-5}        # interface width
         # material_property_names = 'chi'
         constant_names =        'R      T       N1      N2      s       sw
                                 ev_J    d_f     chi'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    0.4
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    1
                                 ${ev_J} ${d_f}  ${chi}'
         expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
@@ -203,13 +203,13 @@ eps = ${fparse d_f*1e-5}        # interface width
     [./TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0
+        dt = 10.0
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     [../]
   
-    end_time = 10800 # seconds
+    end_time = 31536000 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
