@@ -1,15 +1,15 @@
 # Unit conversions
 # ev_J = 6.24e18    # Coversion of energy
 ev_J = 1
-d_f = 1e6           # factor to convert to m from the chosen units
-s = 1e+10           # Scaling factor
+d_f = 1e0           # factor to convert to m from the chosen units
+s = 1e-3            # Scaling factor
 
 # Simulation parameters
-n = 050     # number of elements per side
+n = 100     # number of elements per side
 d = ${fparse d_f*5e-3}          # size of the side
 
 # System parameters
-a = 0.45    # type A monomer density
+a = 0.95    # type A monomer density
 chi = 8e-3  # Flory-Huggins parameter
 N1 = 1000   # Segment number for elastomer matrix (very large number)
 N2 = 87.7   # Segment number for silicon fluid (DPDM-005-088)
@@ -17,10 +17,11 @@ R = 8.314   # Universal gas constant
 T = 300     # Temperature in Kelvin
 E = 0.5e6   # Elastic modulus (V31-151)
 # nc = 3e-4   # crosslink density (V31-151)
-M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
-k = ${fparse 1e-8/d_f}         # gradient energy coefficient
+M = ${fparse d_f^5*4.74e7}      # Initial mobility, depends on swell ratio
+k = ${fparse 1e-8/d_f}          # gradient energy coefficient
 eps = ${fparse d_f*1e-4}        # interface width
 vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
+V2 = ${fparse vs*N2}            # volume of solvent
 
 [Mesh]
     # generate a 2D mesh
@@ -139,12 +140,16 @@ vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
         property_name = f_mix
         coupled_variables = 'c'
         # material_property_names = 'chi'
-        constant_names =        'R      T       N1      N2      s       sw
+        # constant_names =        'R      T       N1      N2      s       sw
+        #                         ev_J    d_f     chi'
+        constant_names =        'R      T       N1      V2      s       vs
                                 ev_J    d_f     chi'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    1
+        constant_expressions = '${R}    ${T}   ${N1}    ${V2}   ${s}    ${vs}
                                 ${ev_J} ${d_f}  ${chi}'
-        expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
-                    +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
+        expression = 's*ev_J*(R*T/(c*d_f^3))*((c*0*log(c))/N1
+                    +((1-c)*log(1-c))/V2+(chi*c*(1-c)/vs))'
+        # expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
+        #             +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
         derivative_order = 2
     [../]
     # elastic energy
@@ -203,7 +208,7 @@ vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
     [./TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 10.0
+        dt = 1.0e-4
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
