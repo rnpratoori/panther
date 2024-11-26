@@ -2,20 +2,20 @@
 # ev_J = 6.24e18    # Coversion of energy
 ev_J = 1
 d_f = 1e6           # factor to convert to m from the chosen units
-s = 1e5             # Scaling factor
+s = 1e-0            # Scaling factor
 
 # Simulation parameters
-n = 100     # number of elements per side
+n = 050     # number of elements per side
 d = ${fparse d_f*1e-3}          # size of the side
 
 # System parameters
-a = 0.05    # type A monomer density
-chi = 3.6   # Flory-Huggins parameter
-N1 = 1      # Segment number for polymer
-N2 = 1      # Segment number for additive
+a = 0.81    # type A monomer density
+chi = 2.4   # Flory-Huggins parameter
+N1 = 23     # Segment number for polymer
+N2 = 5      # Segment number for additive
 R = 8.314   # Universal gas constant
 T = 453     # Temperature in Kelvin
-M = ${fparse d_f^5*1.74e-17}    # Initial mobility, depends on swell ratio
+M = ${fparse d_f^5*6.52e-17}    # Initial mobility, depends on swell ratio
 k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
 eps = ${fparse d_f*1e-4}        # interface width
 E = 8e6                         # Elastic modulus
@@ -49,8 +49,8 @@ E = 8e6                         # Elastic modulus
         type = RandomIC
         variable = c
         seed = 123
-        min = ${fparse a-0.01}
-        max = ${fparse a+0.01}
+        min = ${fparse a-0.05}
+        max = ${fparse a+0.05}
     []
 []
 
@@ -87,19 +87,19 @@ E = 8e6                         # Elastic modulus
     [./f_density]
         type = TotalFreeEnergy
         variable = f_density
-        f_name = 'f_mix'
+        f_name = 'f_tot'
         kappa_names = 'kappa'
         interfacial_vars = c
     [../]
 []
   
-# [BCs]
-#     [./Periodic]
-#         [./all]
-#             auto_direction = 'x y'
-#         [../]
-#     [../]
-# []
+[BCs]
+    [./Periodic]
+        [./all]
+            auto_direction = 'x y'
+        [../]
+    [../]
+[]
   
 [Materials]
     [./mat]
@@ -126,7 +126,7 @@ E = 8e6                         # Elastic modulus
         coupled_variables = 'c'
         constant_names =        'R      T       N1      N2      s       sw
                                 chi     ev_J    d_f'
-        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    7.0
+        constant_expressions = '${R}    ${T}   ${N1}    ${N2}   ${s}    1.0
                                 ${chi}  ${ev_J} ${d_f}'
         expression = 's*ev_J*(R*T/d_f^3)*((sw*c*log(sw*c))/N1
                     +((1-sw*c)*log(1-sw*c))/N2+(chi*sw*c*(1-sw*c)))'
@@ -148,7 +148,7 @@ E = 8e6                         # Elastic modulus
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c'
-        sum_materials = 'f_loc f_mix f_el'
+        sum_materials = 'f_mix'
         derivative_order = 2
     [../]
 []
@@ -194,11 +194,11 @@ E = 8e6                         # Elastic modulus
         optimal_iterations = 10
     [../]
   
-    end_time = 10800 # seconds
+    end_time = 31536000 # seconds
 
-    # # Automatic scaling for u and w
+    # # Automatic scaling for c and w
     # automatic_scaling = true
-    # scaling_group_variables = 'u w'
+    # scaling_group_variables = 'c w'
   
     [./Adaptivity]
       coarsen_fraction = 0.1
@@ -208,11 +208,11 @@ E = 8e6                         # Elastic modulus
 []
   
 [Outputs]
-    [ex_noPBC_s3]
+    [ex_keya_2]
         type = Exodus
         time_step_interval = 1
     []
-    [csv_noPBC_s3]
+    [csv_keya_2]
         type = CSV
     []
 []
