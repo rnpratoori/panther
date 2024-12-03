@@ -7,6 +7,7 @@ chi = x_val # Flory-Huggins parameter
 N = N_val   # Degree of polymerisation
 M_in = 1    # Initial mobility, depends on swell ratio
 s = 1e+4    # Scaling factor
+seed = s_val # Seed value for IC
 
 
 [Mesh]
@@ -27,7 +28,7 @@ s = 1e+4    # Scaling factor
         family = LAGRANGE
         [./InitialCondition]
             type = RandomIC
-            seed = 123
+            seed = ${seed}
             min = ${fparse 2*(a-0.5)-0.1}
             max = ${fparse 2*(a-0.5)+0.1}
         [../]
