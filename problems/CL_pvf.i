@@ -2,7 +2,7 @@
 # ev_J = 6.24e18    # Coversion of energy
 ev_J = 1
 d_f = 1e0           # factor to convert to m from the chosen units
-s = 1e-3            # Scaling factor
+s = 1e-5            # Scaling factor
 
 # Simulation parameters
 n = 100     # number of elements per side
@@ -17,7 +17,7 @@ R = 8.314   # Universal gas constant
 T = 300     # Temperature in Kelvin
 E = 0.5e6   # Elastic modulus (V31-151)
 # nc = 3e-4   # crosslink density (V31-151)
-M = ${fparse d_f^5*4.74e7}      # Initial mobility, depends on swell ratio
+M = ${fparse d_f^5*2.74e-15}    # Initial mobility, depends on swell ratio
 k = ${fparse 1e-8/d_f}          # gradient energy coefficient
 eps = ${fparse d_f*1e-4}        # interface width
 vs = ${fparse (d_f*1e-2)^3*81.2}    # volume of repetition unit
@@ -206,9 +206,9 @@ V2 = ${fparse vs*N2}            # volume of solvent
     nl_abs_tol = 1e-9
     
     [./TimeStepper]
-        # Turn on time stepping
+        # Turn on time stepping 
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0e0
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
