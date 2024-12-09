@@ -16,8 +16,8 @@ N2 = 5      # Segment number for additive
 R = 8.314   # Universal gas constant
 T = 453     # Temperature in Kelvin
 M = ${fparse d_f^5*6.52e-17}    # Initial mobility, depends on swell ratio
-k = ${fparse 4.5e-5/d_f}        # gradient energy coefficient
-eps = ${fparse d_f*1e-4}        # interface width
+k = ${fparse 4.5e-7/d_f}        # gradient energy coefficient
+eps = ${fparse d_f*1e-5}        # interface width
 E = 8e6                         # Elastic modulus
 
 [Mesh]
@@ -148,7 +148,7 @@ E = 8e6                         # Elastic modulus
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c'
-        sum_materials = 'f_mix'
+        sum_materials = 'f_loc f_mix'
         derivative_order = 2
     [../]
 []
@@ -208,11 +208,11 @@ E = 8e6                         # Elastic modulus
 []
   
 [Outputs]
-    [ex_keya_2]
+    [ex_keya_2t_2]
         type = Exodus
         time_step_interval = 1
     []
-    [csv_keya_2]
+    [csv_keya_2t_2]
         type = CSV
     []
 []
