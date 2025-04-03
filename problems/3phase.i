@@ -3,13 +3,14 @@ d = 1       # ND size of the side
 # D = 1e+0    # actual size of the side in 0.1 mum
 # l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.3     # type A monomer density
+b = 0.3     # type B monomer density
 chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
-s = 1e+4    # Scaling factor
-k = 1e-0    # gradient energy coefficient
+s = 1e+0    # Scaling factor
+k = 5e-2    # gradient energy coefficient
 
-R = 10  # Universal gas constant
+R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
 
 [Mesh]
@@ -50,16 +51,25 @@ T = 300 # Temperature in Kelvin
     [pvfIC_1]
         type = RandomIC
         variable = c1
-        seed = 123
-        min = '${fparse a-0.04}'
-        max = '${fparse a+0.04}'
+        distribution = Normal_a
     []
     [pvfIC_2]
         type = RandomIC
         variable = c2
-        seed = 12
-        min = '${fparse a-0.04}'
-        max = '${fparse a+0.04}'
+        distribution = Normal_b
+    []
+[]
+
+[Distributions]
+    [Normal_a]
+        type = Normal
+        mean = ${a}
+        standard_deviation = 0.02
+    []
+    [Normal_b]
+        type = Normal
+        mean = ${b}
+        standard_deviation = 0.02
     []
 []
 
@@ -191,13 +201,13 @@ T = 300 # Temperature in Kelvin
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0e-8
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     []
 
-    end_time = 1e-2 # seconds
+    end_time = 1e-4 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -213,12 +223,12 @@ T = 300 # Temperature in Kelvin
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output_cl/3phase
-        time_step_interval = 1
-        execute_on = 'TIMESTEP_END FINAL'
+        file_base = output_cl/3phase_${a}_${b}
+        time_step_interval = 20
+        execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output_cl/3phase
+        file_base = output_cl/3phase_${a}_${b}
     []
 []
