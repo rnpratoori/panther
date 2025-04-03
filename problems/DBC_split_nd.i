@@ -1,12 +1,13 @@
-n = 400     # number of elements per side
+n = 100     # number of elements per side
 d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum
 l = 1e-3    # Kuhn statistical length in 0.1 mum
-a = 0.5     # type A monomer density
-chi = 0.077 # Flory-Huggins parameter
-N = 300     # Degree of polymerisation
-M_in = 4    # Initial mobility, depends on swell ratio
+a = 0.5   # type A monomer density
+chi = 0.5 # Flory-Huggins parameter
+N = 500   # Degree of polymerisation
+M_in = 1    # Initial mobility, depends on swell ratio
 s = 1e+4    # Scaling factor
+seed = 1 # Seed value for IC
 
 
 [Mesh]
@@ -17,7 +18,7 @@ s = 1e+4    # Scaling factor
     ny = ${n}
     xmax = ${d}  # nd
     ymax = ${d}  # nd
-    # uniform_refine = 2
+    uniform_refine = 2
 []
   
 [Variables]
@@ -27,7 +28,7 @@ s = 1e+4    # Scaling factor
         family = LAGRANGE
         [./InitialCondition]
             type = RandomIC
-            seed = 123
+            seed = ${seed}
             min = ${fparse 2*(a-0.5)-0.1}
             max = ${fparse 2*(a-0.5)+0.1}
         [../]
@@ -48,8 +49,8 @@ s = 1e+4    # Scaling factor
         type = ParsedFunction
         # symbol_names = 'M0'
         # symbol_values = '1e-02'
-        # expression = '${M_in}'
-        expression = '(${M_in} - (6600/5)*t)/1'
+        expression = '${M_in}'
+        # expression = '(${M_in} - (6600/5)*t)/1'
     [../]
 []
   
@@ -229,29 +230,30 @@ s = 1e+4    # Scaling factor
         optimal_iterations = 10
     [../]
   
-    end_time = 1.0 # seconds
+    end_time = 0.01 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
     # scaling_group_variables = 'u w'
   
-    # [./Adaptivity]
-    #   coarsen_fraction = 0.1
-    #   refine_fraction = 0.7
-    #   max_h_level = 2
-    # [../]
+    [./Adaptivity]
+      coarsen_fraction = 0.1
+      refine_fraction = 0.7
+      max_h_level = 2
+    [../]
 []
   
 [Outputs]
     # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
-        # file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}
-        time_step_interval = 1
+        file_base = nd_a${a}_x${chi}_N${N}
+        time_step_interval = 5
+        execute_on = 'TIMESTEP_END FINAL'
     []
     [csv]
         type = CSV
-        # file_base = /Users/rnp/panther/M/100/${M_in}/nd_${N}_${a}_e
+        file_base = nd_a${a}_x${chi}_N${N}_e
     []
 []
 

@@ -1,4 +1,4 @@
-n = 200     # number of elements per side
+n = 100     # number of elements per side
 d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum
 l = 1e-3    # Kuhn statistical length in 0.1 mum
@@ -7,8 +7,7 @@ chi = x_val # Flory-Huggins parameter
 N = N_val   # Degree of polymerisation
 M_in = 1    # Initial mobility, depends on swell ratio
 s = 1e+4    # Scaling factor
-seed = s_val # Seed value for IC
-
+seed = r_val# Seed value for IC
 
 [Mesh]
     # generate a 2D mesh
@@ -18,7 +17,7 @@ seed = s_val # Seed value for IC
     ny = ${n}
     xmax = ${d}  # nd
     ymax = ${d}  # nd
-    # uniform_refine = 2
+    uniform_refine = 2
 []
   
 [Variables]
@@ -38,38 +37,25 @@ seed = s_val # Seed value for IC
         order = FIRST
         family = LAGRANGE
     [../]
-    # Average
-    # [./m]
-    #     order = 
 []
 
 [Functions]
     # A ParsedFunction to define time dependent Mobility
     [./mobility_func]
         type = ParsedFunction
-        # symbol_names = 'M0'
-        # symbol_values = '1e-02'
         expression = '${M_in}'
-        # expression = '(${M_in} - (6600/5)*t)/1'
     [../]
 []
   
 [AuxVariables]
     # polymer volume fraction
     [./pvf]
-        # order = FIRST
-        # family = LAGRANGE
     [../]
     # segment number fraction
     [./m]
         order = CONSTANT
         family = MONOMIAL
     [../]
-    # # average u
-    # [./bar_u]
-    #     order = CONSTANT
-    #     family = MONOMIAL
-    # [../]
     # used to describe the exponential func to be used in ParsedMaterial
     [./mobility_temp]
     [../]
@@ -119,12 +105,6 @@ seed = s_val # Seed value for IC
         variable = m
         expression = '2*${a} - 1'
     [../]
-    # # calculate bar_u
-    # [./bar_u]
-    #     type = ProjectionAux
-    #     v = u
-    #     variable = bar_u
-    # [../]
     # calculate M
     [./mobility]
         type = FunctionAux
@@ -132,7 +112,7 @@ seed = s_val # Seed value for IC
         function = 'mobility_func'
         execute_on = timestep_begin
     [../]
-    # # calculate energy density from local and gradient energies (J/mol/mum^2)
+    # calculate energy density from local and gradient energies (J/mol/mum^2)
     [./f_density]
         type = TotalFreeEnergy
         variable = f_density
@@ -159,12 +139,6 @@ seed = s_val # Seed value for IC
         prop_values = '${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
                         ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
     [../]
-    # [./mat]
-    #     type = GenericFunctionMaterial
-    #     prop_names  = 'M   kappa    sigma'
-    #     prop_values = '${fparse 1.0/s} ${fparse ((l^2)/(3*a*(1-a)*chi*D^2))*s}
-    #                     ${fparse ((36*D^2)/((l*a*(1-a)*N)^2))*s}'
-    # [../]
     [./mobility]
         type = ParsedMaterial
         property_name  = M
@@ -173,13 +147,6 @@ seed = s_val # Seed value for IC
         constant_expressions = '1e-0'
         expression = 'if((M0 * mobility_temp / ${s})<=0, 0, (M0 * mobility_temp / ${s}))'
     [../]
-    # # In ND formulation, kappa is square of
-    # # interface width
-    # [./kappa]
-    #     type = GenericFunctionMaterial
-    #     prop_names  = 'M   kappa    sigma'
-    #     prop_values = '1.0 ${fparse (eps^2)}  7.4e-2'
-    # [../]
     # free energy density function (nJ/mol/nm^2)
     # same as in CHMath
     [./local_energy]
@@ -209,11 +176,7 @@ seed = s_val # Seed value for IC
   
     # Preconditioning using the additive Schwartz method and LU decomposition
     petsc_options_iname = '-pc_type -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm                  preonly       lu           2'
-  
-    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    # petsc_options_iname = '-pc_type -pc_hypre_type'
-    # petsc_options_value = 'hypre    boomeramg'
+    petsc_options_value = 'asm          preonly         lu      2'
   
     l_tol = 1e-3
     l_abs_tol = 1e-9
@@ -232,23 +195,18 @@ seed = s_val # Seed value for IC
   
     end_time = 1.0 # seconds
 
-    # # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'u w'
-  
-    # [./Adaptivity]
-    #   coarsen_fraction = 0.1
-    #   refine_fraction = 0.7
-    #   max_h_level = 2
-    # [../]
+    [./Adaptivity]
+      coarsen_fraction = 0.1
+      refine_fraction = 0.7
+      max_h_level = 2
+    [../]
 []
   
 [Outputs]
-    # file_base = /Users/rnp/panther/test/
     [ex]
         type = Exodus
         file_base = nd_a${a}_x${chi}_N${N}
-        time_step_interval = 5
+        time_step_interval = 10
         execute_on = 'TIMESTEP_END FINAL'
     []
     [csv]

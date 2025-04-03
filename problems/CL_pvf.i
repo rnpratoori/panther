@@ -9,7 +9,7 @@ n = 100     # number of elements per side
 d = ${fparse d_f*5e-3}          # size of the side
 
 # System parameters
-a = 0.95    # type A monomer density
+a = 0.88    # type A monomer density
 chi = 8e-3  # Flory-Huggins parameter
 N1 = 1000   # Segment number for elastomer matrix (very large number)
 N2 = 87.7   # Segment number for silicon fluid (DPDM-005-088)
