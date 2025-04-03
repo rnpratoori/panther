@@ -106,6 +106,8 @@ compile_commands.json
 build
 framework/contrib/libtorch
 test.cache
+output*/*
+# output_dump_/
 
 # Allow certain files in gold directories
 !**/gold/*.e
