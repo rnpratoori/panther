@@ -2,7 +2,7 @@ n = 100     # number of elements per side
 d = 1       # ND size of the side
 # D = 1e+0    # actual size of the side in 0.1 mum
 # l = 1e-3    # Kuhn statistical length in 0.1 mum
-a = 0.5     # type A monomer density
+a = 0.67     # type A monomer density
 chi = 3.0   # Flory-Huggins parameter
 N = 1       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
@@ -13,14 +13,21 @@ R = 10  # Universal gas constant
 T = 300 # Temperature in Kelvin
 
 [Mesh]
-    # generate a 2D mesh
-    type = GeneratedMesh
-    dim = 2
-    nx = ${n}
-    ny = ${n}
-    xmax = ${d}
-    ymax = ${d}
-    # uniform_refine = 2
+    [2p]
+        # generate a 2D mesh
+        type = GeneratedMeshGenerator
+        dim = 2
+        nx = ${n}
+        ny = ${n}
+        xmax = ${d}
+        ymax = ${d}
+        # uniform_refine = 2
+    []
+    [Subdomain]
+        type = SubdomainIDGenerator
+        input = 2p
+        subdomain_id = 1
+    []
 []
 
 [Variables]
@@ -50,6 +57,10 @@ T = 300 # Temperature in Kelvin
     [f_density]
         order = CONSTANT
         family = MONOMIAL
+    []
+    [c2]
+        order = FIRST
+        family = LAGRANGE
     []
 []
 
@@ -83,15 +94,22 @@ T = 300 # Temperature in Kelvin
         kappa_names = 'kappa'
         interfacial_vars = c
     []
-[]
-
-[BCs]
-    [Periodic]
-        [all]
-            auto_direction = 'x y'
-        []
+    # calculate c2 from c
+    [c2]
+        type = ParsedAux
+        variable = c2
+        coupled_variables = 'c'
+        expression = '1 - c'
     []
 []
+
+# [BCs]
+#     [Periodic]
+#         [all]
+#             auto_direction = 'x y'
+#         []
+#     []
+# []
 
 [Materials]
     [mat]
@@ -156,13 +174,13 @@ T = 300 # Temperature in Kelvin
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0e-8
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     []
 
-    end_time = 1 # seconds
+    end_time = 1e-5 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -178,12 +196,12 @@ T = 300 # Temperature in Kelvin
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output_cl/3phase
+        file_base = output/2phase
         time_step_interval = 1
-        execute_on = 'TIMESTEP_END FINAL'
+        execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output_cl/3phase
+        file_base = output/2phase
     []
 []
