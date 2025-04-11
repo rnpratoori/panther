@@ -3,9 +3,9 @@ d = 1       # ND size of the side
 a = 0.67     # type A monomer density
 chi = 1.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
-M = 1e-3       # Initial mobility, depends on swell ratio
+M = 1e-2       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 1e-0    # gradient energy coefficient
+k = 1e0    # gradient energy coefficient
 
 R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
@@ -163,11 +163,11 @@ T = 300 # Temperature in Kelvin
         optimal_iterations = 10
     []
 
-    end_time = 1e0 # seconds
+    end_time = 1e-3 # seconds
 
-    # # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'u w'
+    # Automatic scaling for u and w
+    automatic_scaling = true
+    scaling_group_variables = 'c w'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -180,7 +180,7 @@ T = 300 # Temperature in Kelvin
     [ex]
         type = Exodus
         file_base = output/2phase
-        time_step_interval = 20
+        time_step_interval = 2
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]

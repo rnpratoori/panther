@@ -1,14 +1,12 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-# D = 1e+0    # actual size of the side in 0.1 mum
-# l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.3     # type A monomer density
 b = 0.3     # type B monomer density
 chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
-M = 1       # Initial mobility, depends on swell ratio
+M = 1e-2       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 5e-2    # gradient energy coefficient
+k = 1e0    # gradient energy coefficient
 
 R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
@@ -95,6 +93,7 @@ T = 300 # Temperature in Kelvin
     [coupled_parsed1]
         type = SplitCHParsed
         variable = c1
+        coupled_variables = 'c2'
         f_name = f_mix
         kappa_name = kappa
         w = w1
@@ -113,6 +112,7 @@ T = 300 # Temperature in Kelvin
     [coupled_parsed2]
         type = SplitCHParsed
         variable = c2
+        coupled_variables = 'c1'
         f_name = f_mix
         kappa_name = kappa
         w = w2
@@ -129,14 +129,6 @@ T = 300 # Temperature in Kelvin
         interfacial_vars = 'c1 c2'
     []
 []
-
-# [BCs]
-#     [Periodic]
-#         [all]
-#             auto_direction = 'x y'
-#         []
-#     []
-# []
 
 [Materials]
     [mat]
@@ -183,35 +175,33 @@ T = 300 # Temperature in Kelvin
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type -sub_ksp_type
-                            -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm          preonly
-                               lu           2'
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
 
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
     # petsc_options_value = 'hypre    boomeramg'
 
-    l_tol = 1e-6
-    l_abs_tol = 1e-9
+    l_tol = 1e-10
+    l_abs_tol = 1e-10
     l_max_its = 30
     nl_max_its = 30
-    nl_abs_tol = 1e-9
+    nl_abs_tol = 1e-10
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-6
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     []
 
-    end_time = 1e-4 # seconds
+    end_time = 1e-2 # seconds
 
-    # # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'u w'
+    # Automatic scaling for u and w
+    automatic_scaling = true
+    scaling_group_variables = 'c1 w1; c2 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -223,12 +213,12 @@ T = 300 # Temperature in Kelvin
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output_cl/3phase_${a}_${b}
-        time_step_interval = 20
+        file_base = output/3phase_${a}_${b}
+        time_step_interval = 2
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output_cl/3phase_${a}_${b}
+        file_base = output/3phase_${a}_${b}
     []
 []
