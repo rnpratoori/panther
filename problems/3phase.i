@@ -10,6 +10,7 @@ k = 1e0    # gradient energy coefficient
 
 R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
+beta = 1e-3*R*T
 
 [Mesh]
     # generate a 2D mesh
@@ -142,9 +143,9 @@ T = 300 # Temperature in Kelvin
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c1 c2'
-        constant_names = 'R      T       chi     N       s'
-        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}'
-        expression = 's*(R*T*(c1*log(c1)/N + c2*log(c2)/N + (1-c1-c2)*log(1-c1-c2) + chi*c1*c2 + chi*c1*(1-c1-c2) + chi*c2*(1-c1-c2)))'
+        constant_names = 'R      T       chi     N       s      beta'
+        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}    ${beta}'
+        expression = 's*(R*T*(c1*log(c1)/N + c2*log(c2)/N + (1-c1-c2)*log(1-c1-c2) + chi*c1*c2 + chi*c1*(1-c1-c2) + chi*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
         derivative_order = 2
     []
     # Total free energy
@@ -201,7 +202,7 @@ T = 300 # Temperature in Kelvin
 
     # Automatic scaling for u and w
     automatic_scaling = true
-    scaling_group_variables = 'c1 w1; c2 w2'
+    scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
