@@ -1,8 +1,8 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
 a = 0.67     # type A monomer density
-chi = 3.0   # Flory-Huggins parameter
-N = 1       # Degree of polymerisation
+chi = 1.0   # Flory-Huggins parameter
+N = 5       # Degree of polymerisation
 M = 1e-3       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 k = 1e-0    # gradient energy coefficient
@@ -110,7 +110,7 @@ T = 300 # Temperature in Kelvin
         coupled_variables = 'c'
         constant_names = 'R      T       chi     N       s'
         constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}'
-        expression = 's*(R*T*(c*log(c)/N + (1-c)*log(1-c) + chi*c*(1-c)))'
+        expression = 's*(R*T*(c*log(c)/N + (1-c)*log(1-c)/N + chi*c*(1-c)))'
         derivative_order = 2
     []
     # Total free energy
@@ -157,7 +157,7 @@ T = 300 # Temperature in Kelvin
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-6
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
