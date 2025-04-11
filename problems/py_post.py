@@ -89,12 +89,12 @@ def save_image(exodus_file, image_filename):
 # Example usage
 curpath=Path(__file__).parent.absolute()
 dirname=os.path.basename(curpath)
-output_path=Path(join(curpath,'output_dump'))
-save_path=Path("/mnt/c/Users/rnp/Documents/Research/DBC/Images_PF")
+output_path=Path(join(curpath,'output'))
+save_path=Path("/mnt/c/Users/rnp/Documents/Research/")
 
 subdirs = [d for d in output_path.iterdir() if d.is_dir()]
 for subdir in tqdm(subdirs):
-    filelist=[f for f in listdir(subdir) if isfile(join(subdir, f)) and f.endswith('.e')]
+    filelist=[f for f in listdir(subdir) if isfile(join(subdir, f)) and f.endswith('_dbc.e')]
     exodus_file = join(subdir, filelist[0])  # Replace with your Exodus file path
     image_filename = join(save_path, filelist[0].replace('.e', '') + '.png')  # Image file to save the output
     save_image(exodus_file, image_filename)

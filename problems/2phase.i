@@ -1,15 +1,13 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-# D = 1e+0    # actual size of the side in 0.1 mum
-# l = 1e-3    # Kuhn statistical length in 0.1 mum
 a = 0.67     # type A monomer density
 chi = 3.0   # Flory-Huggins parameter
 N = 1       # Degree of polymerisation
-M = 1       # Initial mobility, depends on swell ratio
-s = 1e+4    # Scaling factor
+M = 1e-3       # Initial mobility, depends on swell ratio
+s = 1e+0    # Scaling factor
 k = 1e-0    # gradient energy coefficient
 
-R = 10  # Universal gas constant
+R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
 
 [Mesh]
@@ -22,11 +20,6 @@ T = 300 # Temperature in Kelvin
         xmax = ${d}
         ymax = ${d}
         # uniform_refine = 2
-    []
-    [Subdomain]
-        type = SubdomainIDGenerator
-        input = 2p
-        subdomain_id = 1
     []
 []
 
@@ -103,14 +96,6 @@ T = 300 # Temperature in Kelvin
     []
 []
 
-# [BCs]
-#     [Periodic]
-#         [all]
-#             auto_direction = 'x y'
-#         []
-#     []
-# []
-
 [Materials]
     [mat]
         type = GenericFunctionMaterial
@@ -156,20 +141,18 @@ T = 300 # Temperature in Kelvin
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type -sub_ksp_type
-                            -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm          preonly
-                               lu           2'
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
 
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
     # petsc_options_value = 'hypre    boomeramg'
 
-    l_tol = 1e-6
-    l_abs_tol = 1e-9
+    l_tol = 1e-10
+    l_abs_tol = 1e-10
     l_max_its = 30
     nl_max_its = 30
-    nl_abs_tol = 1e-9
+    nl_abs_tol = 1e-10
 
     [TimeStepper]
         # Turn on time stepping
@@ -180,7 +163,7 @@ T = 300 # Temperature in Kelvin
         optimal_iterations = 10
     []
 
-    end_time = 1e-5 # seconds
+    end_time = 1e0 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -197,7 +180,7 @@ T = 300 # Temperature in Kelvin
     [ex]
         type = Exodus
         file_base = output/2phase
-        time_step_interval = 1
+        time_step_interval = 20
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
