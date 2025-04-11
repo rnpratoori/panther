@@ -4,8 +4,8 @@ dx = 2       # ND size of the side in x
 dy = 1       # ND size of the side in y
 # D = 1e+0    # actual size of the side in 0.1 mum
 # l = 1e-3    # Kuhn statistical length in 0.1 mum
-a = 0.3     # type A monomer density
-b = 0.3     # type B monomer density
+a = a_val     # type A monomer density
+b = b_val     # type B monomer density
 chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
@@ -186,10 +186,8 @@ beta = 1e-3*R*T
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type -sub_ksp_type
-                            -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm          preonly
-                               lu           2'
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
 
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
@@ -210,7 +208,7 @@ beta = 1e-3*R*T
         optimal_iterations = 10
     []
 
-    end_time = 1e-6 # seconds
+    end_time = 1e0 # seconds
 
     # # Automatic scaling for u and w
     # automatic_scaling = true
@@ -223,15 +221,15 @@ beta = 1e-3*R*T
     # []
 []
 
-# [Outputs]
-#     [ex]
-#         type = Exodus
-#         file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
-#         time_step_interval = 20
-#         execute_on = 'TIMESTEP_END INITIAL FINAL'
-#     []
-#     [csv]
-#         type = CSV
-#         file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
-#     []
-# []
+[Outputs]
+    [ex]
+        type = Exodus
+        file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
+        time_step_interval = 20
+        execute_on = 'TIMESTEP_END INITIAL FINAL'
+    []
+    [csv]
+        type = CSV
+        file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
+    []
+[]
