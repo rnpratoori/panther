@@ -10,14 +10,14 @@ chi23 = 0.1   # Flory-Huggins parameter
 N1 = 5       # Degree of polymerisation
 N2 = 5       # Degree of polymerisation
 N3 = 1       # Degree of polymerisation
-M = 1e-2       # Initial mobility, depends on swell ratio
+M = 1e-0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 1e0    # gradient energy coefficient
+k = 1e-1    # gradient energy coefficient
 
 R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
 beta = 1e-3*R*T
-delta = 1e-2
+delta = 1e-3
 
 [Mesh]
     [2d]
@@ -249,7 +249,7 @@ delta = 1e-2
         coupled_variables = 'c1'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        expression = '(M*(1-c1)^2)/s'
+        expression = '(M*(c1)^2)/s'
         # derivative_order = 2
     []
     [mobility2]
@@ -258,7 +258,7 @@ delta = 1e-2
         coupled_variables = 'c2'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        expression = '(M*(1-c2)^2)/s'
+        expression = '(M*(c2)^2)/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -293,40 +293,15 @@ delta = 1e-2
     [nodes] # Number of nodes in mesh
         type = NumNodes
     []
-    # [sum_check]
-    #     type = ParsedPostprocessor
-    #     expression = 'c1 + c2'
-    #     pp_names = 'c1 c2'
-    #   []
 []
-
-[Preconditioning]
-    # [./FDP]
-    #   type = FDP
-    # [../]
-    # [./SMP]
-    #     type = SMP
-    #     full = true
-    #     [../]
-  []
 
 [Executioner]
     type = Transient
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type -sub_ksp_type
-                            -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm          preonly
-                               lu           2'
-
-    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    # petsc_options_iname = '-pc_type -pc_hypre_type -snes_linesearch_damping'
-    # petsc_options_value = 'hypre    boomeramg  0.5'
-
-    # petsc_options = '-pc_svd_monitor'
-
-    line_search = 'basic'
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
@@ -361,17 +336,17 @@ delta = 1e-2
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase_dbc
+        file_base = output/3phase_Mdecay_3_0.1
         time_step_interval = 1
-        execute_on = 'TIMESTEP_BEGIN INITIAL FINAL'
+        execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase_dbc
+        file_base = output/3phase_Mdecay_3_0.1
     []
     # print_linear_residuals = true
 []
 
-[Debug]
-  show_var_residual_norms = true
-[]
+# [Debug]
+#   show_var_residual_norms = true
+# []
