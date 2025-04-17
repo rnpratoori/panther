@@ -10,7 +10,7 @@ chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 5e-2    # gradient energy coefficient
+k = (2e-2)^2    # gradient energy coefficient
 
 R = 8.314  # Universal gas constant
 T = 300 # Temperature in Kelvin
