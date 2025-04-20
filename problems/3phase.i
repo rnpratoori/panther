@@ -4,12 +4,13 @@ a = 0.3     # type A monomer density
 b = 0.3     # type B monomer density
 chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
-M = 1e-2       # Initial mobility, depends on swell ratio
+M = 1       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 1e0    # gradient energy coefficient
+Cn = 5e-2  # Cahn number
+k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 8.314  # Universal gas constant
-T = 300 # Temperature in Kelvin
+R = 1  # Universal gas constant
+T = 1 # Temperature in Kelvin
 beta = 1e-3*R*T
 
 [Mesh]
@@ -77,6 +78,10 @@ beta = 1e-3*R*T
         order = CONSTANT
         family = MONOMIAL
     []
+    [f_int_density]
+        order = CONSTANT
+        family = MONOMIAL
+    []
 []
 
 [Kernels]
@@ -129,6 +134,14 @@ beta = 1e-3*R*T
         kappa_names = 'kappa kappa'
         interfacial_vars = 'c1 c2'
     []
+    # calculate interfacial energy density
+    [f_int_density]
+        type = ParsedAux
+        variable = f_int_density
+        coupled_variables = 'f_density'
+        material_properties = 'f_tot'
+        expression = 'f_density - f_tot'
+    []
 []
 
 [Materials]
@@ -159,6 +172,13 @@ beta = 1e-3*R*T
     []
 []
 
+[Preconditioning]
+    [coupled]
+      type = SMP
+      full = true
+    []
+[]
+
 [Postprocessors]
     # Calculate total free energy at each timestep
     [total_energy]
@@ -166,9 +186,16 @@ beta = 1e-3*R*T
         variable = f_density
         execute_on = 'initial timestep_end'
     []
-    [nodes] # Number of nodes in mesh
-        type = NumNodes
+    [interfacial_energy]
+        type = ElementIntegralVariablePostprocessor
+        variable = f_int_density
+        execute_on = 'initial timestep_end'
     []
+    [./elapsed]
+        type = PerfGraphData
+        section_name = "Root"
+        data_type = total
+    [../]
 []
 
 [Executioner]
@@ -176,8 +203,11 @@ beta = 1e-3*R*T
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type'
-    petsc_options_value = 'lu'
+    petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    petsc_options_value = 'asm      31                  preonly      ilu          1'
+
+    # petsc_options_iname = '-pc_type'
+    # petsc_options_value = 'lu'
 
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
@@ -192,17 +222,17 @@ beta = 1e-3*R*T
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-6
+        dt = 1.0e-3
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
     []
 
-    end_time = 1e-2 # seconds
+    end_time = 1e0 # seconds
 
-    # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'c1 c2; w1 w2'
+    # # Automatic scaling for u and w
+    # automatic_scaling = true
+    # scaling_group_variables = 'c1 w1; c2 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -214,12 +244,16 @@ beta = 1e-3*R*T
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase_${a}_${b}
-        time_step_interval = 2
+        file_base = output/3phase_t5
+        time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase_${a}_${b}
+        file_base = output/3phase_t5
     []
 []
+
+# [Debug]
+#     show_var_residual_norms = true
+# []
