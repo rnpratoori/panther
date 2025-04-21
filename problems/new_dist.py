@@ -82,8 +82,8 @@ def get_values(exodus_file, variable='c'):
 # === MAIN EXECUTION ===
 if __name__ == '__main__':
     source_file = "output/2phase.e"
-    copy_file = "output/2phase_copy.e"
-    reference_file = "output/3phase_0.3_0.3.e"
+    copy_file = "output/2phase_copy_0.4.e"
+    reference_file = "output/3phase_0.4_0.4.e"
     
     # Create a copy of the source file
     if os.path.exists(copy_file):

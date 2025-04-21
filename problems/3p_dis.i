@@ -1,5 +1,5 @@
 nx = 100     # number of elements in x
-ny = 101     # number of elements in y
+ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 1.00       # ND size of the side in y
 a = 0.3     # type A monomer density
@@ -12,12 +12,13 @@ N2 = 5       # Degree of polymerisation
 N3 = 1       # Degree of polymerisation
 M = 1e-0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 1e-1    # gradient energy coefficient
+Cn = 5e-2  # Cahn number
+k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 8.314  # Universal gas constant
-T = 300 # Temperature in Kelvin
+R = 1  # Universal gas constant
+T = 1 # Temperature in Kelvin
 beta = 1e-3*R*T
-delta = 1e-3
+delta = 1e-6
 
 [Mesh]
     [2d]
@@ -34,7 +35,7 @@ delta = 1e-3
     [c3_domain]
         type = ParsedSubdomainMeshGenerator
         block_id = 1
-        combinatorial_geometry = 'y > 0.99'
+        combinatorial_geometry = 'y > 100/${ny}'
         input = 2d
     []
 []
@@ -77,6 +78,13 @@ delta = 1e-3
         variable = c2
         block = 0
     []
+    # [c1]
+    #     type = SolutionIC
+    #     from_variable = 'c'
+    #     solution_uo = 2phase
+    #     variable = c1
+    #     block = 0
+    # []
     # [c2]
     #     type = CoupledValueFunctionIC
     #     function = c_2phase
@@ -84,18 +92,18 @@ delta = 1e-3
     #     v = c1
     #     block = 0
     # []
-    # [top_c1]
-    #     type = ConstantIC
-    #     value = ${delta}
-    #     variable = c1
-    #     block = 1
-    # []
-    # [top_c2]
-    #     type = ConstantIC
-    #     value = ${delta}
-    #     variable = c2
-    #     block = 1
-    # []
+    [top_c1]
+        type = ConstantIC
+        value = ${delta}
+        variable = c1
+        block = 1
+    []
+    [top_c2]
+        type = ConstantIC
+        value = ${delta}
+        variable = c2
+        block = 1
+    []
     # [w1]
     #     type = CoupledValueFunctionIC
     #     function = w1_2phase
@@ -107,7 +115,7 @@ delta = 1e-3
     #     type = CoupledValueFunctionIC
     #     function = w2_2phase
     #     variable = w2
-    #     v = w1
+    #     v = 'c1 c2'
     #     block = 0
     # []
 []
@@ -130,10 +138,16 @@ delta = 1e-3
 [UserObjects]
   [2phase]
     type = SolutionUserObject
-    mesh = 'output/2phase_copy.e'
+    mesh = 'output/2phase_copy_0.4.e'
     system_variables = 'c1_rescale c2_rescale'
     timestep = LATEST
   []
+#   [2phase]
+#     type = SolutionUserObject
+#     mesh = 'output/2phase.e'
+#     system_variables = 'c'
+#     timestep = LATEST
+#   []
 []
 
 [Distributions]
@@ -217,20 +231,20 @@ delta = 1e-3
     []
 []
 
-[BCs]
-    [top1]
-        type = DirichletBC
-        variable = c1
-        boundary = 2
-        value = ${delta}
-    []
-    [top2]
-        type = DirichletBC
-        variable = c2
-        boundary = 2
-        value = ${delta}
-    []
-[]
+# [BCs]
+#     [top1]
+#         type = DirichletBC
+#         variable = c1
+#         boundary = 2
+#         value = ${delta}
+#     []
+#     [top2]
+#         type = DirichletBC
+#         variable = c2
+#         boundary = 2
+#         value = ${delta}
+#     []
+# []
 
 [Materials]
     [mat]
@@ -283,6 +297,13 @@ delta = 1e-3
     []
 []
 
+[Preconditioning]
+    [coupled]
+      type = SMP
+      full = true
+    []
+[]
+
 [Postprocessors]
     # Calculate total free energy at each timestep
     [total_energy]
@@ -290,9 +311,11 @@ delta = 1e-3
         variable = f_density
         execute_on = 'initial timestep_end'
     []
-    [nodes] # Number of nodes in mesh
-        type = NumNodes
-    []
+    [./elapsed]
+        type = PerfGraphData
+        section_name = "Root"
+        data_type = total
+    [../]
 []
 
 [Executioner]
@@ -300,8 +323,10 @@ delta = 1e-3
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type'
-    petsc_options_value = 'lu'
+    petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    petsc_options_value = 'asm      31                  preonly      ilu          1'
+
+    line_search = 'basic'
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
@@ -320,11 +345,11 @@ delta = 1e-3
 
     # dt = 1.0e-8
 
-    end_time = 1e4 # seconds
+    end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'c1 c2; w1 w2'
+    # automatic_scaling = true
+    # scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -336,17 +361,16 @@ delta = 1e-3
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase_Mdecay_3_0.1
+        file_base = output/3p_dis_t4
         time_step_interval = 1
-        execute_on = 'TIMESTEP_END INITIAL FINAL'
+        execute_on = 'TIMESTEP_BEGIN INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase_Mdecay_3_0.1
+        file_base = output/3p_dis_t4
     []
-    # print_linear_residuals = true
 []
 
-# [Debug]
-#   show_var_residual_norms = true
-# []
+[Debug]
+  show_var_residual_norms = true
+[]
