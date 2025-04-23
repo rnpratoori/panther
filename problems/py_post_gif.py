@@ -72,11 +72,19 @@ def main(exodus_filename, output_filename):
     Z = np.zeros_like(X)
     points = np.vstack([X, Y, Z]).T
     
-    # Read element connectivity (assuming QUAD elements)
-    elem_node = np.ma.getdata(ds.variables['connect1'][:]) - 1  # zero-indexed
+    # Read all element blocks (connectivity) dynamically
+    connect_vars = [v for v in ds.variables if v.startswith('connect')]
+    block_meshes = []
     
-    # Create a base mesh (constant geometry)
-    base_mesh = pv.UnstructuredGrid({vtk.VTK_QUAD: elem_node}, points)
+    for connect_var in connect_vars:
+        elem_node = np.ma.getdata(ds.variables[connect_var][:]) - 1
+        mesh = pv.UnstructuredGrid({vtk.VTK_QUAD: elem_node}, points)
+        block_meshes.append(mesh)
+    
+    # Combine all blocks into one mesh
+    base_mesh = block_meshes[0]
+    for mesh in block_meshes[1:]:
+        base_mesh = base_mesh.merge(mesh, merge_points=True)
     
     # Assume that the Exodus file has nodal variables for c1 and c2 stored as:
     # 'vals_nod_var1' for c1 and 'vals_nod_var2' for c2.
@@ -135,12 +143,12 @@ def main(exodus_filename, output_filename):
     
 if __name__ == "__main__":
     # Process all .e files in the results/output_dump_3p directory
-    input_dir = "results/output_dump_3p"
+    input_dir = "output"
     for exodus_file in sorted(os.listdir(input_dir)):
-        if exodus_file.endswith('.e'):
+        if exodus_file.endswith('_bcic_t2.e'):
             exodus_path = os.path.join(input_dir, exodus_file)
             # Create output filename by replacing .e with .gif
-            output_filename = os.path.join(input_dir, exodus_file.replace('.e', '.gif'))
+            output_filename = os.path.join(input_dir, exodus_file.replace('.e', '_v3.gif'))
             print(f"Processing {exodus_file}...")
             main(exodus_path, output_filename)
             print(f"Created {output_filename}")

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the CSV file
-csv_file = 'output/2phase_iter.csv'
+csv_file = 'output/3p_dis_t4.csv'
 data = pd.read_csv(csv_file)
 
 # Create output filename by replacing .csv with .jpg
