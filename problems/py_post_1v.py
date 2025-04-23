@@ -63,7 +63,7 @@ if __name__ == "__main__":
     variable = "c3"  # Start with a known variable name
     
     for exodus_file in sorted(os.listdir(input_dir)):
-        if exodus_file.endswith('_dis_t3.e'):
+        if exodus_file.endswith('_bcic_t2.e'):
             exodus_path = os.path.join(input_dir, exodus_file)
             output_filename = os.path.join(input_dir, 
                                          exodus_file.replace('.e', f'_{variable}.gif'))
