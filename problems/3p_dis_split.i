@@ -64,34 +64,34 @@ delta = 1e-6
 []
 
 [ICs]
-    [c1]
-        type = SolutionIC
-        from_variable = 'c1_rescale'
-        solution_uo = 2phase
-        variable = c1
-        block = 0
-    []
-    [c2]
-        type = SolutionIC
-        from_variable = 'c2_rescale'
-        solution_uo = 2phase
-        variable = c2
-        block = 0
-    []
     # [c1]
     #     type = SolutionIC
-    #     from_variable = 'c'
+    #     from_variable = 'c1_rescale'
     #     solution_uo = 2phase
     #     variable = c1
     #     block = 0
     # []
     # [c2]
-    #     type = CoupledValueFunctionIC
-    #     function = c_2phase
+    #     type = SolutionIC
+    #     from_variable = 'c2_rescale'
+    #     solution_uo = 2phase
     #     variable = c2
-    #     v = c1
     #     block = 0
     # []
+    [c1]
+        type = SolutionIC
+        from_variable = 'c'
+        solution_uo = 2phase
+        variable = c1
+        block = 0
+    []
+    [c2]
+        type = CoupledValueFunctionIC
+        function = c_2phase
+        variable = c2
+        v = c1
+        block = 0
+    []
     [top_c1]
         type = ConstantIC
         value = ${delta}
@@ -136,18 +136,18 @@ delta = 1e-6
 []
 
 [UserObjects]
-  [2phase]
-    type = SolutionUserObject
-    mesh = 'output/2phase_copy_0.4.e'
-    system_variables = 'c1_rescale c2_rescale'
-    timestep = LATEST
-  []
 #   [2phase]
 #     type = SolutionUserObject
-#     mesh = 'output/2phase.e'
-#     system_variables = 'c'
+#     mesh = 'output/2phase_copy_0.4.e'
+#     system_variables = 'c1_rescale c2_rescale'
 #     timestep = LATEST
 #   []
+  [2phase]
+    type = SolutionUserObject
+    mesh = 'output/2phase.e'
+    system_variables = 'c'
+    timestep = LATEST
+  []
 []
 
 [Distributions]
@@ -226,13 +226,13 @@ delta = 1e-6
         kappa_names = 'kappa kappa'
         interfacial_vars = 'c1 c2'
     []
-    # calculate c3
-    [c3]
-        type = ParsedAux
-        variable = c3
-        coupled_variables = 'c1 c2'
-        expression = '1 - c1 - c2'
-    []
+    # # calculate c3
+    # [c3]
+    #     type = ParsedAux
+    #     variable = c3
+    #     coupled_variables = 'c1 c2'
+    #     expression = '1 - c1 - c2'
+    # []
     # calculate interfacial energy density
     [f_int_density]
         type = ParsedAux
@@ -243,22 +243,22 @@ delta = 1e-6
     []
 []
 
-[BCs]
-    [top1]
-        type = DirichletBC
-        variable = c1
-        boundary = 2
-        # block = 1
-        value = ${delta}
-    []
-    [top2]
-        type = DirichletBC
-        variable = c2
-        boundary = 2
-        # block = 1
-        value = ${delta}
-    []
-[]
+# [BCs]
+#     [top1]
+#         type = DirichletBC
+#         variable = c1
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+#     [top2]
+#         type = DirichletBC
+#         variable = c2
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+# []
 
 [Materials]
     [mat]
@@ -297,7 +297,24 @@ delta = 1e-6
         coupled_variables = 'c1 c2'
         constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s     beta'
         constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
-        expression = 's*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
+        # # expression = 's*(R*T*(max(c1, 1e-6)*log(max(c1, 1e-6))/N1 +
+        #              max(c2, 1e-6)*log(max(c2, 1e-6))/N2 +
+        #              max(1 - c1 - c2, 1e-6)*log(max(1 - c1 - c2, 1e-6))/N3 +
+        #              chi12*c1*c2 +
+        #              chi13*c1*max(1 - c1 - c2, 1e-6) +
+        #              chi23*c2*max(1 - c1 - c2, 1e-6)) +
+        #       beta*(1/max(c1, 1e-6) +
+        #             1/max(c2, 1e-6) +
+        #             1/max(1 - c1 - c2, 1e-6)))'
+        expression = 'if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 +
+                     c2*log(c2)/N2 +
+                     (1 - c1 - c2)*log(1 - c1 - c2)/N3 +
+                     chi12*c1*c2 +
+                     chi13*c1*(1 - c1 - c2) +
+                     chi23*c2*(1 - c1 - c2) +
+              beta*(1/c1 +
+                    1/c2 +
+                    1/(1 - c1 - c2)))), s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2)))'
         derivative_order = 2
     []
     # Total free energy
@@ -342,21 +359,24 @@ delta = 1e-6
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm      31                  preonly      ilu          1'
+    # petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    # petsc_options_value = 'asm      31                  preonly      ilu          1'
 
     line_search = 'basic'
+
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
     l_max_its = 30
-    nl_max_its = 30
-    nl_abs_tol = 1e-10
+    nl_max_its = 100
+    nl_abs_tol = 1e-6
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-10
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -367,8 +387,8 @@ delta = 1e-6
     end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'c1 c2; w1 w2'
+    automatic_scaling = true
+    scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -380,13 +400,13 @@ delta = 1e-6
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_copy_t1
+        file_base = output/3p_dis_split_t4
         time_step_interval = 1
         execute_on = 'TIMESTEP_BEGIN INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_copy_t1
+        file_base = output/3p_dis_split_t4
     []
 []
 
