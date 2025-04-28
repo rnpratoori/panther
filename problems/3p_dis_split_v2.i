@@ -18,7 +18,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
 beta = 1e-3*R*T
-delta = 1e-6
+delta = 0
 
 [Mesh]
     [2d]
@@ -45,21 +45,25 @@ delta = 1e-6
     [c1]
         order = FIRST
         family = LAGRANGE
+        scaling = 1e-10
     []
     # Chemical potential (nJ/mol)
     [w1]
         order = FIRST
         family = LAGRANGE
+        scaling = 1e10
     []
     # polymer volume fraction
     [c2]
         order = FIRST
         family = LAGRANGE
+        scaling = 1e-10
     []
     # Chemical potential (nJ/mol)
     [w2]
         order = FIRST
         family = LAGRANGE
+        scaling = 1e10
     []
 []
 
@@ -168,6 +172,16 @@ delta = 1e-6
         order = CONSTANT
         family = MONOMIAL
     []
+    [f_density_0]
+        order = CONSTANT
+        family = MONOMIAL
+        block = 0
+    []
+    [f_density_1]
+        order = CONSTANT
+        family = MONOMIAL
+        block = 1
+    []
     [c3]
         order = FIRST
         family = LAGRANGE
@@ -175,6 +189,16 @@ delta = 1e-6
     [f_int_density]
         order = CONSTANT
         family = MONOMIAL
+    []
+    [f_int_density_0]
+        order = CONSTANT
+        family = MONOMIAL
+        block = 0
+    []
+    [f_int_density_1]
+        order = CONSTANT
+        family = MONOMIAL
+        block = 1
     []
 []
 
@@ -189,13 +213,23 @@ delta = 1e-6
         variable = w1
         mob_name = M1
     []
-    [coupled_parsed1]
+    [coupled_parsed1_0]
         type = SplitCHParsed
         variable = c1
         coupled_variables = 'c2'
-        f_name = f_mix
+        f_name = f_mix_0
         kappa_name = kappa
         w = w1
+        block = 0
+    []
+    [coupled_parsed1_1]
+        type = SplitCHParsed
+        variable = c1
+        coupled_variables = 'c2'
+        f_name = f_mix_1
+        kappa_name = kappa
+        w = w1
+        block = 1
     []
     [w2_dot]
         type = CoupledTimeDerivative
@@ -207,24 +241,43 @@ delta = 1e-6
         variable = w2
         mob_name = M2
     []
-    [coupled_parsed2]
+    [coupled_parsed2_0]
         type = SplitCHParsed
         variable = c2
         coupled_variables = 'c1'
-        f_name = f_mix
+        f_name = f_mix_0
         kappa_name = kappa
         w = w2
+        block = 0
+    []
+    [coupled_parsed2_1]
+        type = SplitCHParsed
+        variable = c2
+        coupled_variables = 'c1'
+        f_name = f_mix_1
+        kappa_name = kappa
+        w = w2
+        block = 1
     []
 []
 
 [AuxKernels]
     # calculate energy density from local and gradient energies (J/mol/mum^2)
-    [f_density]
+    [f_density_0]
         type = TotalFreeEnergy
-        variable = f_density
-        f_name = 'f_tot'
+        variable = f_density_0
+        f_name = 'f_tot_0'
         kappa_names = 'kappa kappa'
         interfacial_vars = 'c1 c2'
+        block = 0
+    []
+    [f_density_1]
+        type = TotalFreeEnergy
+        variable = f_density_1
+        f_name = 'f_tot_1'
+        kappa_names = 'kappa kappa'
+        interfacial_vars = 'c1 c2'
+        block = 1
     []
     # calculate c3
     [c3]
@@ -234,12 +287,21 @@ delta = 1e-6
         expression = '1 - c1 - c2'
     []
     # calculate interfacial energy density
-    [f_int_density]
+    [f_int_density_0]
         type = ParsedAux
-        variable = f_int_density
-        coupled_variables = 'f_density'
-        material_properties = 'f_tot'
-        expression = 'f_density - f_tot'
+        variable = f_int_density_0
+        coupled_variables = 'f_density_0'
+        material_properties = 'f_tot_0'
+        expression = 'f_density_0 - f_tot_0'
+        block = 0
+    []
+    [f_int_density_1]
+        type = ParsedAux
+        variable = f_int_density_1
+        coupled_variables = 'f_density_1'
+        material_properties = 'f_tot_1'
+        expression = 'f_density_1 - f_tot_1'
+        block = 1
     []
 []
 
@@ -291,26 +353,49 @@ delta = 1e-6
     []
     # mixing energy based on
     # Flory-Huggins theory
-    [mixing_energy]
+    [mixing_energy_0]
         type = DerivativeParsedMaterial
-        property_name = f_mix
+        property_name = f_mix_0
         coupled_variables = 'c1 c2'
         constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s     beta'
         constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
-        expression = 'if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1 - c1 - c2)*log(1 - c1 - c2)/N3 +
-            chi12*c1*c2 + chi13*c1*(1 - c1 - c2) + chi23*c2*(1 - c1 - c2) +
-            beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)))),
-            s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2)))'
+        expression = 'if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 +
+                     c2*log(c2)/N2 + (1 - c1 - c2)*log(1 - c1 - c2)/N3 +
+                     chi12*c1*c2 + chi13*c1*(1 - c1 - c2) + chi23*c2*(1 - c1 - c2) +
+                    beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)))), s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2)))'
         derivative_order = 2
+        block = 0
+    []
+    [mixing_energy_1]
+        type = DerivativeParsedMaterial
+        property_name = f_mix_1
+        coupled_variables = 'c1 c2'
+        constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s     beta'
+        constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
+        expression = 'if(c1>0, if(c2>0, s*(R*T*(c1*log(c1)/N1 +
+                     c2*log(c2)/N2 + (1 - c1 - c2)*log(1 - c1 - c2)/N3 +
+                     chi12*c1*c2 + chi13*c1*(1 - c1 - c2) + chi23*c2*(1 - c1 - c2) +
+                    beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)))), 0), 0)'
+        derivative_order = 2
+        block = 1
     []
     # Total free energy
     # Sum of all the parts
-    [free_energy]
+    [free_energy_0]
         type = DerivativeSumMaterial
-        property_name = f_tot
+        property_name = f_tot_0
         coupled_variables = 'c1 c2'
-        sum_materials = 'f_mix'
+        sum_materials = 'f_mix_0'
         derivative_order = 2
+        block = 0
+    []
+    [free_energy_1]
+        type = DerivativeSumMaterial
+        property_name = f_tot_1
+        coupled_variables = 'c1 c2'
+        sum_materials = 'f_mix_1'
+        derivative_order = 2
+        block = 1
     []
 []
 
@@ -372,9 +457,9 @@ delta = 1e-6
 
     end_time = 1e0 # seconds
 
-    # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'c1 c2; w1 w2'
+    # # Automatic scaling for u and w
+    # automatic_scaling = true
+    # scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -386,16 +471,16 @@ delta = 1e-6
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_split_t5
+        file_base = output/3p_dis_split_v2_t1
         time_step_interval = 1
         execute_on = 'TIMESTEP_BEGIN INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_split_t5
+        file_base = output/3p_dis_split_v2_t1
     []
 []
 
-# [Debug]
-#   show_var_residual_norms = true
-# []
+[Debug]
+  show_var_residual_norms = true
+[]
