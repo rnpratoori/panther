@@ -1,15 +1,19 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.67     # type A monomer density
-chi = 1.0   # Flory-Huggins parameter
-N = 5       # Degree of polymerisation
-M = 1e0       # Initial mobility, depends on swell ratio
+a = 0.70    # type A monomer density
+M = 1e0     # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-Cn = 5e-2  # Cahn number
+Cn = 5e-2   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 1  # Universal gas constant
-T = 1 # Temperature in Kelvin
+# Flory-Huggins approximation
+# chi = 2.0 # Flory-Huggins parameter
+# N = 5     # Degree of polymerisation
+# R = 1     # Universal gas constant
+# T = 1     # Temperature in Kelvin
+dc1 = 4.54391e-5    # minima of Flory-Huggins free energy
+dc2 = 9.99955e-5    # minima of Flory-Huggins free energy
+A = 5.78418         # Energy barrier scaling factor
 
 [Mesh]
     [2p]
@@ -121,9 +125,9 @@ T = 1 # Temperature in Kelvin
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names = 'R      T       chi     N       s'
-        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}'
-        expression = 's*(R*T*(c*log(c)/N + (1-c)*log(1-c)/N + chi*c*(1-c)))'
+        constant_names =        'A      dc1        dc2       s'
+        constant_expressions = '${A}    ${dc1}   ${dc2}     ${s}'
+        expression = 's*A*(c-dc1)^2*(c-dc2)^2'
         derivative_order = 2
     []
     # Total free energy
@@ -209,12 +213,12 @@ T = 1 # Temperature in Kelvin
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2phase_iter
+        file_base = output/2phase
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2phase_iter
+        file_base = output/2phase
     []
 []
