@@ -1,19 +1,19 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.70    # type A monomer density
+a = 0.67    # type A monomer density
 M = 1e0     # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 # Flory-Huggins approximation
-# chi = 2.0 # Flory-Huggins parameter
+# chi = 1.0 # Flory-Huggins parameter
 # N = 5     # Degree of polymerisation
 # R = 1     # Universal gas constant
 # T = 1     # Temperature in Kelvin
-dc1 = 4.54391e-5    # minima of Flory-Huggins free energy
-dc2 = 9.99955e-5    # minima of Flory-Huggins free energy
-A = 5.78418         # Energy barrier scaling factor
+dc1 = 7.18806e-5    # minima of Flory-Huggins free energy
+dc2 = 9.92812e-5    # minima of Flory-Huggins free energy
+A = 1.91177         # Energy barrier scaling factor
 
 [Mesh]
     [2p]
