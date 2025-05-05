@@ -209,12 +209,12 @@ T = 1 # Temperature in Kelvin
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2phase_iter
+        file_base = output/2phase_fh
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2phase_iter
+        file_base = output/2phase_fh
     []
 []
