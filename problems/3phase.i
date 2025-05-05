@@ -1,17 +1,24 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.3     # type A monomer density
+a = 0.4     # type A monomer density
 b = 0.3     # type B monomer density
-chi = 2.0   # Flory-Huggins parameter
-N = 5       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 1  # Universal gas constant
-T = 1 # Temperature in Kelvin
-beta = 1e-3*R*T
+# Flory-Huggins approximation
+# chi12 = 2.0   # Flory-Huggins parameter
+# chi13 = 2.0   # Flory-Huggins parameter
+# chi23 = 2.0   # Flory-Huggins parameter
+# N1 = 5        # Degree of polymerisation
+# N2 = 5        # Degree of polymerisation
+# N3 = 1        # Degree of polymerisation
+# R = 1         # Universal gas constant
+# T = 1         # Temperature in Kelvin
+dc1 = 7.0092e-1 # minima of Flory-Huggins free energy
+dc2 = 2.0779e-1 # minima of Flory-Huggins free energy
+dc3 = 9.1286e-2 # minima of Flory-Huggins free energy
 
 [Mesh]
     # generate a 2D mesh
@@ -156,10 +163,9 @@ beta = 1e-3*R*T
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c1 c2'
-        constant_names = 'R      T       chi     N       s      beta'
-        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}    ${beta}'
-        expression = 's*(R*T*(c1*log(c1)/N + c2*log(c2)/N + (1-c1-c2)*log(1-c1-c2) + chi*c1*c2 + chi*c1*(1-c1-c2) + chi*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
-        derivative_order = 2
+        constant_names =        'dc1        dc2     dc3     s'
+        constant_expressions = '${dc1}    ${dc2}    ${dc3}  ${s}'
+        expression = 's*((c1-dc1)^2*(c2-dc2)^2*(1-c1-c2-dc3)^2)'        derivative_order = 2
     []
     # Total free energy
     # Sum of all the parts
@@ -222,7 +228,7 @@ beta = 1e-3*R*T
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-3
+        dt = 1.0e-4
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -244,13 +250,13 @@ beta = 1e-3*R*T
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase_t5
+        file_base = output/3phase
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase_t5
+        file_base = output/3phase
     []
 []
 
