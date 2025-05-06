@@ -2,7 +2,7 @@ n = 100     # number of elements per side
 d = 1       # ND size of the side
 a = 0.67    # type A monomer density
 M = 1e0     # Initial mobility, depends on swell ratio
-s = 1e+0    # Scaling factor
+S = 1e+0    # Scaling factor
 Cn = 5e-2   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
@@ -11,9 +11,14 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 # N = 5     # Degree of polymerisation
 # R = 1     # Universal gas constant
 # T = 1     # Temperature in Kelvin
-dc1 = 7.18806e-5    # minima of Flory-Huggins free energy
-dc2 = 9.92812e-5    # minima of Flory-Huggins free energy
-A = 1.91177         # Energy barrier scaling factor
+p = 1.11371e-1      # 0th coefficient of taylor function
+q = 0               # 1st coefficient of taylor function
+r = -0.6            # 2nd coefficient of taylor function
+s = 0               # 3rd coefficient of taylor function
+t = 2.66667e-1      # 4th coefficient of taylor function
+u = 0               # 5th coefficient of taylor function
+v = 4.26667e-1      # 6th coefficient of taylor function
+c0 = 0.5
 
 [Mesh]
     [2p]
@@ -117,7 +122,7 @@ A = 1.91177         # Energy barrier scaling factor
     [mat]
         type = GenericFunctionMaterial
         prop_names = 'M   kappa'
-        prop_values = '${fparse M/s} ${fparse k*s}'
+        prop_values = '${fparse M/S} ${fparse k*S}'
     []
     # mixing energy based on
     # Flory-Huggins theory
@@ -125,9 +130,14 @@ A = 1.91177         # Energy barrier scaling factor
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names =        'A      dc1        dc2       s'
-        constant_expressions = '${A}    ${dc1}   ${dc2}     ${s}'
-        expression = 's*A*(c-dc1)^2*(c-dc2)^2'
+        constant_names =        'p      q       r       s
+                                t      u        v       S
+                                c0'
+        constant_expressions = '${p}    ${q}    ${r}    ${s}
+                                ${t}    ${u}    ${v}    ${S}
+                                ${c0}'
+        expression = 'S*(p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3
+                    + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6)'
         derivative_order = 2
     []
     # Total free energy
@@ -213,12 +223,12 @@ A = 1.91177         # Energy barrier scaling factor
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2phase
+        file_base = output/2phase_taylor
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2phase
+        file_base = output/2phase_taylor
     []
 []
