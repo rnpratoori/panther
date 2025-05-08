@@ -1,6 +1,6 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.4     # type A monomer density
+a = 0.3     # type A monomer density
 b = 0.3     # type B monomer density
 M = 1       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
@@ -16,9 +16,59 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 # N3 = 1        # Degree of polymerisation
 # R = 1         # Universal gas constant
 # T = 1         # Temperature in Kelvin
-dc1 = 7.0092e-1 # minima of Flory-Huggins free energy
-dc2 = 2.0779e-1 # minima of Flory-Huggins free energy
-dc3 = 9.1286e-2 # minima of Flory-Huggins free energy
+A00 = 1.39797e-1
+A10 = 1.15888e-1
+A20 = -6e-1
+A30 = 1.33333e-1
+A40 = 1.73333
+A50 = -1.76
+A60 = 7.89333
+A01 = 1.15888e-1
+A11 = 0
+A21 = 2
+A31 = 2.66667
+A41 = 4
+A51 = 6.4
+A61 = 1.06667e1
+A02 = -6e-1
+A12 = 2
+A22 = 4
+A32 = 8
+A42 = 1.6e1
+A52 = 3.2e1
+A62 = 6.4e1
+A03 = 1.33333e-1
+A13 = 2.66667
+A23 = 8
+A33 = 2.13333e1
+A43 = 5.33333e1
+A53 = 1.28e2
+A63 = 2.98667e2
+A04 = 1.73333
+A14 = 4
+A24 = 1.6e1
+A34 = 5.33333e1
+A44 = 1.60e2
+A54 = 4.48e2
+A64 = 1.19467e3
+A05 = -1.76
+A15 = 6.4
+A25 = 3.2e1
+A35 = 1.28e2
+A45 = 4.48e2
+A55 = 1.4336e3
+A65 = 4.3008e3
+A06 = 7.89333
+A16 = 1.06667e1
+A26 = 6.4e1
+A36 = 2.98667e2
+A46 = 1.19467e3
+A56 = 4.3008e3
+A66 = 1.4336e4
+c1_0 = 0.25
+c2_0 = 0.25
+beta = 1.0e-3       # Stability parameter
+
 
 [Mesh]
     # generate a 2D mesh
@@ -163,9 +213,31 @@ dc3 = 9.1286e-2 # minima of Flory-Huggins free energy
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c1 c2'
-        constant_names =        'dc1        dc2     dc3     s'
-        constant_expressions = '${dc1}    ${dc2}    ${dc3}  ${s}'
-        expression = 's*((c1-dc1)^2*(c2-dc2)^2*(1-c1-c2-dc3)^2)'        derivative_order = 2
+        constant_names =       'A00    A10    A20    A30    A40    A50    A60
+                               A01    A11    A21    A31    A41    A51    A61
+                               A02    A12    A22    A32    A42    A52    A62
+                               A03    A13    A23    A33    A43    A53    A63
+                               A04    A14    A24    A34    A44    A54    A64
+                               A05    A15    A25    A35    A45    A55    A65
+                               A06    A16    A26    A36    A46    A56    A66    
+                               s      c1_0   c2_0   beta'
+        constant_expressions = '${A00} ${A10} ${A20} ${A30} ${A40} ${A50} ${A60}
+                               ${A01} ${A11} ${A21} ${A31} ${A41} ${A51} ${A61}
+                               ${A02} ${A12} ${A22} ${A32} ${A42} ${A52} ${A62}
+                               ${A03} ${A13} ${A23} ${A33} ${A43} ${A53} ${A63}
+                               ${A04} ${A14} ${A24} ${A34} ${A44} ${A54} ${A64}
+                               ${A05} ${A15} ${A25} ${A35} ${A45} ${A55} ${A65}
+                               ${A06} ${A16} ${A26} ${A36} ${A46} ${A56} ${A66}
+                               ${s}   ${c1_0} ${c2_0} ${beta}'
+        expression = 's*(A00 + 
+                    A10*(c1-c1_0) + A01*(c2-c2_0) + 
+                    A20*(c1-c1_0)^2 + A11*(c1-c1_0)*(c2-c2_0) + A02*(c2-c2_0)^2 +
+                    A30*(c1-c1_0)^3 + A21*(c1-c1_0)^2*(c2-c2_0) + A12*(c1-c1_0)*(c2-c2_0)^2 + A03*(c2-c2_0)^3 + 
+                    A40*(c1-c1_0)^4 + A31*(c1-c1_0)^3*(c2-c2_0) + A22*(c1-c1_0)^2*(c2-c2_0)^2 + A13*(c1-c1_0)*(c2-c2_0)^3 + A04*(c2-c2_0)^4 + 
+                    A50*(c1-c1_0)^5 + A41*(c1-c1_0)^4*(c2-c2_0) + A32*(c1-c1_0)^3*(c2-c2_0)^2 + A23*(c1-c1_0)^2*(c2-c2_0)^3 + A14*(c1-c1_0)*(c2-c2_0)^4 + A05*(c2-c2_0)^5 + 
+                    A60*(c1-c1_0)^6 + A51*(c1-c1_0)^5*(c2-c2_0) + A42*(c1-c1_0)^4*(c2-c2_0)^2 + A33*(c1-c1_0)^3*(c2-c2_0)^3 + A24*(c1-c1_0)^2*(c2-c2_0)^4 + A15*(c1-c1_0)*(c2-c2_0)^5 + A06*(c2-c2_0)^6 + 
+                    beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
+        derivative_order = 2
     []
     # Total free energy
     # Sum of all the parts
@@ -250,13 +322,13 @@ dc3 = 9.1286e-2 # minima of Flory-Huggins free energy
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase
+        file_base = output/3phase_taylor
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase
+        file_base = output/3phase_taylor
     []
 []
 
