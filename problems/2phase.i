@@ -19,6 +19,7 @@ t = 2.66667e-1      # 4th coefficient of taylor function
 u = 0               # 5th coefficient of taylor function
 v = 4.26667e-1      # 6th coefficient of taylor function
 c0 = 0.5
+beta = 1.0e-3       # Stability parameter
 
 [Mesh]
     [2p]
@@ -132,12 +133,12 @@ c0 = 0.5
         coupled_variables = 'c'
         constant_names =        'p      q       r       s
                                 t      u        v       S
-                                c0'
+                                c0      beta'
         constant_expressions = '${p}    ${q}    ${r}    ${s}
                                 ${t}    ${u}    ${v}    ${S}
-                                ${c0}'
+                                ${c0}   ${beta}'
         expression = 'S*(p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3
-                    + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6)'
+                    + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + beta*(1/c + 1/(1-c)))'
         derivative_order = 2
     []
     # Total free energy
