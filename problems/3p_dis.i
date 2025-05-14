@@ -1,24 +1,75 @@
 nx = 100     # number of elements in x
-ny = 120     # number of elements in y
+ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 1.00       # ND size of the side in y
-a = 0.3     # type A monomer density
-b = 0.3     # type B monomer density
-chi12 = 2.0   # Flory-Huggins parameter
-chi13 = 0.1   # Flory-Huggins parameter
-chi23 = 0.1   # Flory-Huggins parameter
-N1 = 5       # Degree of polymerisation
-N2 = 5       # Degree of polymerisation
-N3 = 1       # Degree of polymerisation
+# a = 0.3     # type A monomer density
+# b = 0.3     # type B monomer density
 M = 1e-0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 1  # Universal gas constant
-T = 1 # Temperature in Kelvin
-beta = 1e-3*R*T
-delta = 1e-6
+# chi12 = 2.0   # Flory-Huggins parameter
+# chi13 = 0.1   # Flory-Huggins parameter
+# chi23 = 0.1   # Flory-Huggins parameter
+# N1 = 5       # Degree of polymerisation
+# N2 = 5       # Degree of polymerisation
+# N3 = 1       # Degree of polymerisation
+# R = 1  # Universal gas constant
+# T = 1 # Temperature in Kelvin
+A00 = 3.35203e-1    # changes
+A10 = 1.15888e-1
+A20 = 1.3           # changes
+A30 = 1.33333e-1
+A40 = 1.73333
+A50 = -1.76
+A60 = 7.89333
+A01 = 1.15888e-1
+A11 = 3.8           # changes
+A21 = 2
+A31 = 2.66667
+A41 = 4
+A51 = 6.4
+A61 = 1.06667e1
+A02 = 1.3           # changes
+A12 = 2
+A22 = 4
+A32 = 8
+A42 = 1.6e1
+A52 = 3.2e1
+A62 = 6.4e1
+A03 = 1.33333e-1
+A13 = 2.66667
+A23 = 8
+A33 = 2.13333e1
+A43 = 5.33333e1
+A53 = 1.28e2
+A63 = 2.98667e2
+A04 = 1.73333
+A14 = 4
+A24 = 1.6e1
+A34 = 5.33333e1
+A44 = 1.60e2
+A54 = 4.48e2
+A64 = 1.19467e3
+A05 = -1.76
+A15 = 6.4
+A25 = 3.2e1
+A35 = 1.28e2
+A45 = 4.48e2
+A55 = 1.4336e3
+A65 = 4.3008e3
+A06 = 7.89333
+A16 = 1.06667e1
+A26 = 6.4e1
+A36 = 2.98667e2
+A46 = 1.19467e3
+A56 = 4.3008e3
+A66 = 1.4336e4
+c1_0 = 0.25
+c3_0 = 0.25
+beta = 1.0e-3       # Stability parameter
+delta = 0
 
 [Mesh]
     [2d]
@@ -52,12 +103,12 @@ delta = 1e-6
         family = LAGRANGE
     []
     # polymer volume fraction
-    [c2]
+    [c3]
         order = FIRST
         family = LAGRANGE
     []
     # Chemical potential (nJ/mol)
-    [w2]
+    [w3]
         order = FIRST
         family = LAGRANGE
     []
@@ -66,111 +117,44 @@ delta = 1e-6
 [ICs]
     [c1]
         type = SolutionIC
-        from_variable = 'c1_rescale'
+        from_variable = 'c'
         solution_uo = 2phase
         variable = c1
         block = 0
     []
-    [c2]
-        type = SolutionIC
-        from_variable = 'c2_rescale'
-        solution_uo = 2phase
-        variable = c2
+    [c3]
+        type = ConstantIC
+        value = ${delta}
+        variable = c3
         block = 0
     []
-    # [c1]
-    #     type = SolutionIC
-    #     from_variable = 'c'
-    #     solution_uo = 2phase
-    #     variable = c1
-    #     block = 0
-    # []
-    # [c2]
-    #     type = CoupledValueFunctionIC
-    #     function = c_2phase
-    #     variable = c2
-    #     v = c1
-    #     block = 0
-    # []
     [top_c1]
         type = ConstantIC
         value = ${delta}
         variable = c1
         block = 1
     []
-    [top_c2]
+    [top_c3]
         type = ConstantIC
-        value = ${delta}
-        variable = c2
+        value = ${fparse 1-delta}
+        variable = c3
         block = 1
     []
-    # [w1]
-    #     type = CoupledValueFunctionIC
-    #     function = w1_2phase
-    #     variable = w1
-    #     v = 'c1 c2'
-    #     block = 0
-    # []
-    # [w2]
-    #     type = CoupledValueFunctionIC
-    #     function = w2_2phase
-    #     variable = w2
-    #     v = 'c1 c2'
-    #     block = 0
-    # []
-[]
-
-[Functions]
-  [c_2phase]
-    type = ParsedFunction
-    expression = '1 - x - ${delta}'
-  []
-  [w1_2phase]
-    type = ParsedFunction
-    expression = '${R}*${T}*(-1 + y*${chi12} - x*${chi13} + (1-x-y)*${chi13} - y*${chi23} + 1/${N1} + log(x)/${N1} - log(1-x-y)/${N3})*${s}'
-  []
-  [w2_2phase]
-    type = ParsedFunction
-    expression = '${R}*${T}*(-1 + x*${chi12} - x*${chi13} + (1-x-y)*${chi23} - y*${chi23} + 1/${N2} + log(y)/${N2} - log(1-x-y)/${N3})*${s}'
-  []
 []
 
 [UserObjects]
   [2phase]
     type = SolutionUserObject
-    mesh = 'output/2phase_copy_0.4.e'
-    system_variables = 'c1_rescale c2_rescale'
+    mesh = 'output/2phase_taylor.e'
+    system_variables = 'c'
     timestep = LATEST
   []
-#   [2phase]
-#     type = SolutionUserObject
-#     mesh = 'output/2phase.e'
-#     system_variables = 'c'
-#     timestep = LATEST
-#   []
-[]
-
-[Distributions]
-    [Normal_a]
-        type = Normal
-        mean = ${a}
-        standard_deviation = 0.02
-    []
-    [Normal_b]
-        type = Normal
-        mean = ${b}
-        standard_deviation = 0.02
-    []
 []
 
 [AuxVariables]
     [f_density]
         order = CONSTANT
         family = MONOMIAL
-    []
-    [c3]
-        order = FIRST
-        family = LAGRANGE
     []
     [f_int_density]
         order = CONSTANT
@@ -192,28 +176,28 @@ delta = 1e-6
     [coupled_parsed1]
         type = SplitCHParsed
         variable = c1
-        coupled_variables = 'c2'
+        coupled_variables = 'c3'
         f_name = f_mix
         kappa_name = kappa
         w = w1
     []
-    [w2_dot]
+    [w3_dot]
         type = CoupledTimeDerivative
-        variable = w2
-        v = c2
+        variable = w3
+        v = c3
     []
-    [coupled_res2]
+    [coupled_res3]
         type = SplitCHWRes
-        variable = w2
-        mob_name = M2
+        variable = w3
+        mob_name = M3
     []
-    [coupled_parsed2]
+    [coupled_parsed3]
         type = SplitCHParsed
-        variable = c2
+        variable = c3
         coupled_variables = 'c1'
         f_name = f_mix
         kappa_name = kappa
-        w = w2
+        w = w3
     []
 []
 
@@ -224,14 +208,7 @@ delta = 1e-6
         variable = f_density
         f_name = 'f_tot'
         kappa_names = 'kappa kappa'
-        interfacial_vars = 'c1 c2'
-    []
-    # calculate c3
-    [c3]
-        type = ParsedAux
-        variable = c3
-        coupled_variables = 'c1 c2'
-        expression = '1 - c1 - c2'
+        interfacial_vars = 'c1 c3'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -251,9 +228,9 @@ delta = 1e-6
         # block = 1
         value = ${delta}
     []
-    [top2]
+    [top3]
         type = DirichletBC
-        variable = c2
+        variable = c3
         boundary = 2
         # block = 1
         value = ${delta}
@@ -266,27 +243,24 @@ delta = 1e-6
         prop_names = 'kappa'
         prop_values = '${fparse k*s}'
     []
-    # [mobility]
-    #     type = GenericFunctionMaterial
-    #     prop_names = 'M1    M2'
-    #     prop_values = '${fparse M/s} ${fparse M/s}'
-    # []
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M1
-        coupled_variables = 'c1 c2'
+        coupled_variables = 'c1 c3'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        expression = '(M*(1-c1)^2)/s'
+        # expression = '(M*4*c1*(1-c1))/s'
+        expression = '(M)/s'
         # derivative_order = 2
     []
-    [mobility2]
+    [mobility3]
         type = DerivativeParsedMaterial
-        property_name = M2
-        coupled_variables = 'c1 c2'
+        property_name = M3
+        coupled_variables = 'c1 c3'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        expression = '(M*(1-c2)^2)/s'
+        expression = '(M)/s'
+        # expression = '(M*4*c3*(1-c3))/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -294,10 +268,31 @@ delta = 1e-6
     [mixing_energy]
         type = DerivativeParsedMaterial
         property_name = f_mix
-        coupled_variables = 'c1 c2'
-        constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s     beta'
-        constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
-        expression = 's*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
+        coupled_variables = 'c1 c3'
+        constant_names =       'A00    A10    A20    A30    A40    A50    A60
+                               A01    A11    A21    A31    A41    A51    A61
+                               A02    A12    A22    A32    A42    A52    A62
+                               A03    A13    A23    A33    A43    A53    A63
+                               A04    A14    A24    A34    A44    A54    A64
+                               A05    A15    A25    A35    A45    A55    A65
+                               A06    A16    A26    A36    A46    A56    A66    
+                               s      c1_0   c3_0   beta'
+        constant_expressions = '${A00} ${A10} ${A20} ${A30} ${A40} ${A50} ${A60}
+                               ${A01} ${A11} ${A21} ${A31} ${A41} ${A51} ${A61}
+                               ${A02} ${A12} ${A22} ${A32} ${A42} ${A52} ${A62}
+                               ${A03} ${A13} ${A23} ${A33} ${A43} ${A53} ${A63}
+                               ${A04} ${A14} ${A24} ${A34} ${A44} ${A54} ${A64}
+                               ${A05} ${A15} ${A25} ${A35} ${A45} ${A55} ${A65}
+                               ${A06} ${A16} ${A26} ${A36} ${A46} ${A56} ${A66}
+                               ${s}   ${c1_0} ${c3_0} ${beta}'
+        expression = 's*(A00 + 
+                    A10*(c1-c1_0) + A01*(c3-c3_0) + 
+                    A20*(c1-c1_0)^2 + A11*(c1-c1_0)*(c3-c3_0) + A02*(c3-c3_0)^2 +
+                    A30*(c1-c1_0)^3 + A21*(c1-c1_0)^2*(c3-c3_0) + A12*(c1-c1_0)*(c3-c3_0)^2 + A03*(c3-c3_0)^3 + 
+                    A40*(c1-c1_0)^4 + A31*(c1-c1_0)^3*(c3-c3_0) + A22*(c1-c1_0)^2*(c3-c3_0)^2 + A13*(c1-c1_0)*(c3-c3_0)^3 + A04*(c3-c3_0)^4 + 
+                    A50*(c1-c1_0)^5 + A41*(c1-c1_0)^4*(c3-c3_0) + A32*(c1-c1_0)^3*(c3-c3_0)^2 + A23*(c1-c1_0)^2*(c3-c3_0)^3 + A14*(c1-c1_0)*(c3-c3_0)^4 + A05*(c3-c3_0)^5 + 
+                    A60*(c1-c1_0)^6 + A51*(c1-c1_0)^5*(c3-c3_0) + A42*(c1-c1_0)^4*(c3-c3_0)^2 + A33*(c1-c1_0)^3*(c3-c3_0)^3 + A24*(c1-c1_0)^2*(c3-c3_0)^4 + A15*(c1-c1_0)*(c3-c3_0)^5 + A06*(c3-c3_0)^6
+                    )'
         derivative_order = 2
     []
     # Total free energy
@@ -305,7 +300,7 @@ delta = 1e-6
     [free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
-        coupled_variables = 'c1 c2'
+        coupled_variables = 'c1 c3'
         sum_materials = 'f_mix'
         derivative_order = 2
     []
@@ -380,13 +375,13 @@ delta = 1e-6
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_copy_t1
+        file_base = output/3p_dis_taylor
         time_step_interval = 1
-        execute_on = 'TIMESTEP_BEGIN INITIAL FINAL'
+        execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_copy_t1
+        file_base = output/3p_dis_taylor
     []
 []
 
