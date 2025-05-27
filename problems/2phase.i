@@ -112,8 +112,18 @@ T = 1 # Temperature in Kelvin
 [Materials]
     [mat]
         type = GenericFunctionMaterial
-        prop_names = 'M   kappa'
-        prop_values = '${fparse M/s} ${fparse k*s}'
+        prop_names = 'kappa'
+        prop_values = '${fparse k*s}'
+    []
+    [mobility1]
+        type = DerivativeParsedMaterial
+        property_name = M
+        coupled_variables = 'c'
+        constant_names = 'M     s'
+        constant_expressions = '${M} ${s}'
+        expression = '(M*4*c*(1-c))/s'
+        # expression = '(M)/s'
+        # derivative_order = 2
     []
     # mixing energy based on
     # Flory-Huggins theory
