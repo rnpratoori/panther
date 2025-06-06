@@ -10,6 +10,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
+beta = 1e-3*R*T
 
 [Mesh]
     [2p]
@@ -131,9 +132,9 @@ T = 1 # Temperature in Kelvin
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names = 'R      T       chi     N       s'
-        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}'
-        expression = 's*(R*T*(c*log(c)/N + (1-c)*log(1-c)/N + chi*c*(1-c)))'
+        constant_names =        'R      T       chi     N       s    beta'
+        constant_expressions = '${R}    ${T}    ${chi}  ${N}    ${s}    ${beta}'
+        expression = 's*(R*T*(c*log(c)/N + (1-c)*log(1-c)/N + chi*c*(1-c) + beta*(1/c + 1/(1-c))))'
         derivative_order = 2
     []
     # Total free energy

@@ -1,5 +1,5 @@
-nx = 10     # number of elements in x
-ny = 12     # number of elements in y
+nx = 100     # number of elements in x
+ny = 101     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 1.00       # ND size of the side in y
 # a = 0.3     # type A monomer density
@@ -17,7 +17,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
-beta = 0e-3*R*T
+beta = 0e-6*R*T
 delta = 0
 
 [Mesh]
@@ -31,11 +31,11 @@ delta = 0
         ymax = ${dy}
         # uniform_refine = 2
     []
-    # Subdomain for ramp
+    # Subdomain
     [c3_domain]
         type = ParsedSubdomainMeshGenerator
         block_id = 1
-        combinatorial_geometry = 'y > 10/${ny}'
+        combinatorial_geometry = 'y > ${nx}/${ny}'
         input = 2d
     []
 []
@@ -76,18 +76,33 @@ delta = 0
         value = ${delta}
         variable = c3
         block = 0
+        # scaling = 1e-8
     []
-    [top_c1]
-        type = ConstantIC
-        value = ${delta}
-        variable = c1
-        block = 1
+    # [top_c1]
+    #     type = ConstantIC
+    #     value = ${delta}
+    #     variable = c1
+    #     block = 1
+    # []
+    # [top_c3]
+    #     type = ConstantIC
+    #     value = ${fparse 1-delta}
+    #     variable = c3
+    #     block = 1
+    # []
+    [w1]
+        type = CoupledValueFunctionIC
+        function = w1_2phase
+        variable = w1
+        v = 'c1 c3'
+        block = 0
     []
-    [top_c3]
-        type = ConstantIC
-        value = ${fparse 1-delta}
-        variable = c3
-        block = 1
+    [w3]
+        type = CoupledValueFunctionIC
+        function = w3_2phase
+        variable = w3
+        v = 'c1 c3'
+        block = 0
     []
 []
 
@@ -97,6 +112,17 @@ delta = 0
     mesh = 'output/2phase_fh.e'
     system_variables = 'c'
     timestep = LATEST
+  []
+[]
+
+[Functions]
+  [w1_2phase]
+    type = ParsedFunction
+    expression = '${R}*${T}*(-1 + y*${chi12} - x*${chi13} + (1-x-y)*${chi13} - y*${chi23} + 1/${N1} + log(x)/${N1} - log(1-x-y)/${N3})*${s}'
+  []
+  [w3_2phase]
+    type = ParsedFunction
+    expression = '${R}*${T}*(-1 + x*${chi12} - x*${chi13} + (1-x-y)*${chi23} - y*${chi23} + 1/${N2} + log(y)/${N2} - log(1-x-y)/${N3})*${s}'
   []
 []
 
@@ -224,9 +250,9 @@ delta = 0
                     if(c1>0,
                     if(1-c1-c3>0, s*(R*T*(c1*log(c1)/N1 + c3*log(c3)/N3 + (1 - c1 - c3)*log(1 - c1 - c3)/N2 +  chi12*c1*(1 - c1 - c3) + chi13*c1*c3 + chi23*c3*(1 - c1 - c3) + beta*(1/c1 + 1/c3 + 1/(1 - c1 - c3)))),
                     s*(R*T*(c1*log(c1)/N1 + c3*log(c3)/N3 + chi13*c1*c3 + beta*(1/c1 + 1/c3)))),
-                    if(1-c3>0, s*(R*T*((1 - c3)*log(1 - c3)/N2 + c3*log(c3)/N3 + chi23*c3*(1 - c3) + beta*(1/(1-c3) + 1/c3))), 0)),
+                    if(1-c3>0, s*(R*T*((1 - c3)*log(1 - c3)/N2 + c3*log(c3)/N3 + chi23*c3*(1 - c3) + beta*(1/(1-c3) + 1/c3))), s*(R*T*(c3*log(c3)/N3 + beta*(1/c3))))),
                     if(c1>0,
-                    if(1-c1>0, s*(R*T*(c1*log(c1)/N1 + (1 - c1)*log(1 - c1)/N2 + chi12*c1*(1 - c1) + beta*(1/c1 + 1/(1-c1)))), 0), 0))'
+                    if(1-c1>0, s*(R*T*(c1*log(c1)/N1 + (1 - c1)*log(1 - c1)/N2 + chi12*c1*(1 - c1) + beta*(1/c1 + 1/(1-c1)))), s*(R*T*((1 - c1)*log(1 - c1)/N2 + beta*(1/(1-c1))))),0))'
         derivative_order = 2
     []
     # Total free energy
@@ -274,32 +300,38 @@ delta = 0
 
 [Executioner]
     type = Transient
-    solve_type = 'NEWTON'
+    solve_type = 'PJFNK'
     scheme = bdf2
 
-    petsc_options = '-pc_svd_monitor'
+    # petsc_options = '-pc_svd_monitor'
 
-    petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'svd      31                  preonly      ilu          1'
+    # petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    # # petsc_options_value = 'asm      31                  preonly      ilu          1'
+    # petsc_options_value = 'svd      31                  preonly      ilu          1'
 
     line_search = 'basic'
 
     # petsc_options_iname = '-pc_type'
     # petsc_options_value = 'lu'
 
+    petsc_options_iname = '-pc_type -pc_factor_shift_type -ksp_type'
+    petsc_options_value = 'lu NONZERO gmres'
+
+    nl_abs_tol = 1e-8      # Relax tolerance initially
+    nl_rel_tol = 1e-6
+
     l_tol = 1e-10
     l_abs_tol = 1e-10
     l_max_its = 50
     nl_max_its = 50
-    nl_abs_tol = 1e-6
+    # nl_abs_tol = 1e-6
 
     [TimeStepper]
-        # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-10
-        cutback_factor = 0.8
-        growth_factor = 1.5
-        optimal_iterations = 10
+        dt = 1.0e-10        # Start larger
+        cutback_factor = 0.5
+        growth_factor = 1.2
+        optimal_iterations = 8
     []
 
     # dt = 1.0e-8
@@ -307,8 +339,9 @@ delta = 0
     end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'c1 c3; w1 w3'
+    # automatic_scaling = true
+    # scaling_group_variables = 'c1 c3; w1 w3'
+    # off_diagonals_in_auto_scaling = 'true'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
