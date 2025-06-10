@@ -132,7 +132,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
         coupled_variables = 'c'
         constant_names = 'M     S'
         constant_expressions = '${M} ${S}'
-        expression = '(M*4*c*(1-c))/S'
+        expression = '(M*16*c^2*(1-c)^2)/S'
         # expression = '(M)/S'
         # derivative_order = 2
     []
