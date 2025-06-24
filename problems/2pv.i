@@ -30,16 +30,6 @@ delta = 0
     ymax = ${d}
 []
 
-[MeshModifiers]
-    [void]
-      type = CoupledVarThresholdElementSubdomainModifier
-      coupled_var = c3
-      criterion_type = ABOVE
-      subdomain_id = 2
-      threshold = 1e-6
-    []
-[]
-
 [Variables]
     # polymer volume fraction
     [c1]
@@ -78,7 +68,7 @@ delta = 0
         invalue = ${fparse 1.0-delta}
         outvalue = ${delta}
         circles_per_side = '2 2'
-        pos_variation = 0.1
+        pos_variation = 0.05
         radius = 0.1
         int_width = 0.01
         radius_variation_type = uniform
@@ -327,7 +317,7 @@ delta = 0
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0e-6
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -352,13 +342,13 @@ delta = 0
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2p_void_spline
+        file_base = output/2p_void_spline_try
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2p_void_spline
+        file_base = output/2p_void_spline_try
     []
 []
 

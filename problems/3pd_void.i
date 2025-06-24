@@ -2,20 +2,27 @@ nx = 100     # number of elements in x
 ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 1.00       # ND size of the side in y
-M = 1e-0       # Initial mobility, depends on swell ratio
+# a = 0.5     # type A monomer density
+M1 = 1       # Initial mobility, depends on swell ratio
+# M2 = 1e-0    # Initial mobility, depends on swell ratio
+M3 = 1e-0    # Initial mobility, depends on swell ratio
+# M4 = 0e-3    # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
+Cn3 = 1e-2  # Cahn number
+k4 = ${fparse Cn3^2}    # gradient energy coefficient
 
-# chi12 = 2.0   # Flory-Huggins parameter
-# chi13 = 0.1   # Flory-Huggins parameter
-# chi23 = 0.1   # Flory-Huggins parameter
+# chi12 = 1.0   # Flory-Huggins parameter
+# chi13 = 10.0   # Flory-Huggins parameter
+# chi23 = 10.0   # Flory-Huggins parameter
 # N1 = 5       # Degree of polymerisation
 # N2 = 5       # Degree of polymerisation
-# N3 = 1       # Degree of polymerisation
+# N3 = 100     # Penalty term for void
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
-beta = 1.0e-3       # Stability parameter
+beta = 1e-3
+alpha = 1e10
 delta = 0
 
 [Mesh]
@@ -39,6 +46,16 @@ delta = 0
     []
 []
 
+[MeshModifiers]
+    [void]
+      type = CoupledVarThresholdElementSubdomainModifier
+      coupled_var = c4
+      criterion_type = ABOVE
+      subdomain_id = 2
+      threshold = 1e-6
+    []
+[]
+
 [Variables]
     # polymer volume fraction
     [c1]
@@ -50,7 +67,6 @@ delta = 0
         order = FIRST
         family = LAGRANGE
     []
-    # polymer volume fraction
     [c3]
         order = FIRST
         family = LAGRANGE
@@ -65,8 +81,8 @@ delta = 0
 [ICs]
     [c1]
         type = SolutionIC
-        from_variable = 'c'
-        solution_uo = 2phase
+        from_variable = 'c1'
+        solution_uo = 2phase_void
         variable = c1
         block = 0
     []
@@ -91,15 +107,26 @@ delta = 0
 []
 
 [UserObjects]
-  [2phase]
-    type = SolutionUserObject
-    mesh = 'output/2phase_spline.e'
-    system_variables = 'c'
-    timestep = LATEST
-  []
+    [2phase_void]
+      type = SolutionUserObject
+      mesh = 'output/2p_void_spline.e'
+      system_variables = 'c1 c3'
+      timestep = LATEST
+    []
 []
 
 [AuxVariables]
+    [c4]
+        order = FIRST
+        family = LAGRANGE
+        [InitialCondition]
+          type = SolutionIC
+          from_variable = 'c3'
+          solution_uo = 2phase_void
+          variable = c4
+          block = 0
+        []
+    []
     [f_density]
         order = CONSTANT
         family = MONOMIAL
@@ -116,6 +143,7 @@ delta = 0
         variable = w1
         v = c1
     []
+    # adding nonlocal term to the energy
     [coupled_res1]
         type = SplitCHWRes
         variable = w1
@@ -134,6 +162,7 @@ delta = 0
         variable = w3
         v = c3
     []
+    # adding nonlocal term to the energy
     [coupled_res3]
         type = SplitCHWRes
         variable = w3
@@ -147,16 +176,44 @@ delta = 0
         kappa_name = kappa
         w = w3
     []
+    # [w2_dot]
+    #     type = CoupledTimeDerivative
+    #     variable = w2
+    #     v = c2
+    # []
+    # # adding nonlocal term to the energy
+    # [coupled_res2]
+    #     type = SplitCHWRes
+    #     variable = w2
+    #     mob_name = M2
+    # []
+    # [coupled_parsed2]
+    #     type = SplitCHParsed
+    #     variable = c2
+    #     coupled_variables = 'c1 c3'
+    #     f_name = f_mix
+    #     kappa_name = kappa
+    #     w = w2
+    # []
 []
 
 [AuxKernels]
+    [c4_update]
+        type = ParsedAux
+        variable = c4
+        # every iteration, c4 will be reset to this expression:
+        coupled_variables = 'c1 c3'
+        # when c3 > 0 (i.e. has invaded), set c4 = 0; else leave at 1
+        expression = 'if(c3=0, if(1-c1-c3=0, if(c1=0, 1, 0), 0), 0)'
+        execute_on = 'INITIAL TIMESTEP_BEGIN'
+    []
     # calculate energy density from local and gradient energies (J/mol/mum^2)
     [f_density]
         type = TotalFreeEnergy
         variable = f_density
         f_name = 'f_tot'
-        kappa_names = 'kappa kappa'
-        interfacial_vars = 'c1 c3'
+        kappa_names = 'kappa    kappa'
+        interfacial_vars = 'c1  c3'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -176,6 +233,13 @@ delta = 0
         # block = 1
         value = ${delta}
     []
+    # [top2]
+    #     type = DirichletBC
+    #     variable = c2
+    #     boundary = 2
+    #     # block = 1
+    #     value = ${delta}
+    # []
     [top3]
         type = DirichletBC
         variable = c3
@@ -188,30 +252,36 @@ delta = 0
 [Materials]
     [mat]
         type = GenericFunctionMaterial
-        prop_names = 'kappa'
-        prop_values = '${fparse k*s}'
+        prop_names = 'kappa     kappa4'
+        prop_values = '${fparse k*s}    ${fparse k4*s}'
     []
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M1
-        coupled_variables = 'c1 c3'
-        constant_names = 'M     s'
-        constant_expressions = '${M} ${s}'
-        expression = '(M*16*c1^2*(1-c1)^2)/s'
-        # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
+        coupled_variables = 'c1 c4'
+        constant_names = 'M1     s'
+        constant_expressions = '${M1} ${s}'
+        expression = '(M1*16*(c1^2*(1-c1)^2)*(1-c4))/s'
         # derivative_order = 2
     []
     [mobility3]
         type = DerivativeParsedMaterial
         property_name = M3
-        coupled_variables = 'c1 c3'
-        constant_names = 'M     s'
-        constant_expressions = '${M} ${s}'
-        # expression = 'if (c3>0, if(c3<1, (M)/s, 0), 0)'
-        # expression = '(M)/s'
-        expression = '(M*16*c3^2*(1-c3)^2)/s'
+        coupled_variables = 'c3 c4'
+        constant_names = 'M3     s'
+        constant_expressions = '${M3} ${s}'
+        expression = '(M3*(16*(c3^2*(1-c3)^2)) + 0*c4)/s'
         # derivative_order = 2
     []
+    # [mobility2]
+    #     type = DerivativeParsedMaterial
+    #     property_name = M2
+    #     coupled_variables = 'c2'
+    #     constant_names = 'M2     s'
+    #     constant_expressions = '${M2} ${s}'
+    #     expression = '(M2*16*(c2^2*(1-c2)^2))/s'
+    #     # derivative_order = 2
+    # []
     # mixing energy based on
     # Flory-Huggins theory
     [mixing_energy]
@@ -221,6 +291,16 @@ delta = 0
         property_name = 'f_mix'           
         coupled_variables = 'c1 c3'          
         derivative_order = 2                 
+    []
+    # void penalty term
+    [void_penalty]
+        type = DerivativeParsedMaterial
+        property_name = 'f_void'
+        coupled_variables = 'c3 c4'
+        constant_names = 'alpha'
+        constant_expressions = '${alpha}'
+        expression = 'if (c4>0, -alpha*c4*c3, 0)'
+        derivative_order = 2
     []
     # beta penalty term
     [beta_penalty]
@@ -240,7 +320,7 @@ delta = 0
     [free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
-        coupled_variables = 'c1 c3'
+        coupled_variables = 'c1 c3 c4'
         sum_materials = 'f_mix f_beta'
         derivative_order = 2
     []
@@ -265,11 +345,10 @@ delta = 0
         variable = f_int_density
         execute_on = 'initial timestep_end'
     []
-    [./elapsed]
-        type = PerfGraphData
-        section_name = "Root"
-        data_type = total
-    [../]
+    [step_size]
+        type = TimestepSize
+    []
+
 []
 
 [Executioner]
@@ -299,7 +378,7 @@ delta = 0
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-10
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -318,22 +397,22 @@ delta = 0
     #     coarsen_fraction = 0.1
     #     refine_fraction = 0.7
     #     max_h_level = 2
-    # [
+    # []
 []
 
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_spline
+        file_base = output/3p_dis_void_spline
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_spline
+        file_base = output/3p_dis_void_spline
     []
 []
 
 # [Debug]
-#   show_var_residual_norms = true
+#     show_var_residual_norms = true
 # []

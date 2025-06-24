@@ -1,46 +1,41 @@
-nx = 100     # number of elements per side
-ny = 25      # number of elements per side
-dx = 4e2       # ND size of the side
-dy = 1e2       # ND size of the side
-ds = 1
-# evj = 1  # electron volt to Joule conversion factor       
-evj = 6.24e18  # electron volt to Joule conversion factor       
-a = 0.3     # type A monomer density
-b = 0.7     # type B monomer density
-c = 0.05     # solvent density
-# M = 1.18e-16       # Initial mobility, depends on swell ratio
-s = 1e-50    # Scaling factor
-# Cn = 5e-2  # Cahn number
-# k = ${fparse Cn^2}    # gradient energy coefficient
-g = ${fparse 33e-3*evj}
-k = ${fparse 0.228*g^2/ds}    # gradient energy coefficient
-
+# nx = 400     # number of elements per side
+# ny = 300      # number of elements per side
+# dx = 4       # ND size of the side
+# dy = 3        # ND size of the side
+# c = 0.05     # solvent density
+M = 1.0       # Initial mobility, depends on swell ratio
+Cn = 5e-2  # Cahn number
+k = ${fparse Cn^2}    # gradient energy coefficient
+s = 1e-0    # Scaling factor
+    
 # 1 - drug
 # 2 - polymer
 # 3 - solvent   
-# Flory-Huggins approximation
 chi12 = 0.42   # Flory-Huggins parameter
-chi13 = 0.08   # Flory-Huggins parameter
-chi23 = 0.4   # Flory-Huggins parameter
+chi13 = 0.42   # Flory-Huggins parameter
+chi23 = 1.21   # Flory-Huggins parameter
 N1 = 10        # Degree of polymerisation
 N2 = 100        # Degree of polymerisation
 N3 = 1        # Degree of polymerisation
-R = ${fparse 8.314*evj}         # Universal gas constant
-T = 298         # Temperature in Kelvin
-v = ${fparse 40e-6*ds^3}
-beta = ${fparse 1e-3*R*T/v}
-D0 = ${fparse 1e-16*ds^2}
+beta = 1e-3
+delta = 0.025
 
 
 [Mesh]
-    # generate a 2D mesh
-    type = GeneratedMesh
+  [main]
+    type = GeneratedMeshGenerator
     dim = 2
-    nx = ${nx}
-    ny = ${ny}
-    xmax = ${dx}
-    ymax = ${dy}
-    uniform_refine = 2
+    nx = 400
+    ny = 300
+    xmax = 4
+    ymax = 3
+  []
+  [top_block]
+    type = ParsedSubdomainMeshGenerator
+    input = main
+    block_id = 1
+    combinatorial_geometry = 'y > 1'
+  []
 []
 
 [Variables]
@@ -48,6 +43,7 @@ D0 = ${fparse 1e-16*ds^2}
     [c1]
         order = FIRST
         family = LAGRANGE
+        # scaling = 1e-30
     []
     # Chemical potential (nJ/mol)
     [w1]
@@ -58,6 +54,7 @@ D0 = ${fparse 1e-16*ds^2}
     [c2]
         order = FIRST
         family = LAGRANGE
+        # scaling = 1e-30
     []
     # Chemical potential (nJ/mol)
     [w2]
@@ -67,33 +64,48 @@ D0 = ${fparse 1e-16*ds^2}
 []
 
 [ICs]
-    [pvfIC_1]
+    [c1]
+        type = SolutionIC
+        from_variable = 'c'
+        solution_uo = 2phase
+        variable = c1
+        block = 0
+    []
+    [c2]
+        type = SolutionIC
+        from_variable = 'c2'
+        solution_uo = 2phase
+        variable = c2
+        block = 0
+    []
+    [top_c1]
         type = RandomIC
         variable = c1
         seed = 123
-        min = ${fparse a*(1-c)-0.01}
-        max = ${fparse a*(1-c)+0.01}
+        min = '${fparse delta*0.95}'
+        max = '${fparse delta*1.05}'
+        block = 1
     []
-    [pvfIC_2]
+    [top_c2]
         type = RandomIC
         variable = c2
-        seed = 123
-        min = ${fparse b*(1-c)-0.01}
-        max = ${fparse b*(1-c)+0.01}
+        seed = 12
+        min = '${fparse delta*0.95}'
+        max = '${fparse delta*1.05}'
+        block = 1
     []
 []
 
-[Distributions]
-    [Normal_a]
-        type = Normal
-        mean = ${fparse a-c/2}
-        standard_deviation = 0.02
+[UserObjects]
+    [2phase]
+      type = SolutionUserObject
+      mesh = 'output/2phase_nd_2.e'
+      system_variables = 'c c2'
+      timestep = LATEST
     []
-    [Normal_b]
-        type = Normal
-        mean = ${fparse b-c/2}
-        standard_deviation = 0.02
-    []
+    # [./normal_noise]
+    #     type = ConservedNormalNoise
+    # [../]
 []
 
 [AuxVariables]
@@ -146,6 +158,18 @@ D0 = ${fparse 1e-16*ds^2}
         kappa_name = kappa
         w = w2
     []
+    # [./conserved_langevin1]
+    #     type = ConservedLangevinNoise
+    #     amplitude = 0.05
+    #     variable = c1
+    #     noise = normal_noise
+    # []
+    # [./conserved_langevin2]
+    #     type = ConservedLangevinNoise
+    #     amplitude = 0.05
+    #     variable = c2
+    #     noise = normal_noise
+    # []
 []
 
 [AuxKernels]
@@ -173,13 +197,18 @@ D0 = ${fparse 1e-16*ds^2}
         prop_names = 'kappa'
         prop_values = '${fparse k*s}'
     []
+    # [mat]
+    #     type = GenericFunctionMaterial
+    #     prop_names = 'kappa M1 M2'
+    #     prop_values = '${fparse k*s}   ${fparse M/s}   ${fparse M/s}'
+    # []
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M1
         coupled_variables = 'c1 c2'
-        constant_names = 'D0        N1      N2      N3     s        ds      evj'
-        constant_expressions = '${D0}   ${N1}   ${N2}   ${N3}   ${s}    ${ds}   ${evj}'
-        expression = 'D0*(ds^0/evj)*(c1*10^(5*(1-c1-c2)-1) + c2*10^(15*(1-c1-c2)-3))/(1/(c1*N1) + 1/((1-c1-c2)*N3))/s'
+        constant_names = 'M        s'
+        constant_expressions = '${M}   ${s}'
+        expression = 'if(1-c1-c2>0, M*c1^2*(1-c1-c2)^2/s, 0)'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
     []
@@ -187,9 +216,9 @@ D0 = ${fparse 1e-16*ds^2}
         type = DerivativeParsedMaterial
         property_name = M2
         coupled_variables = 'c1 c2'
-        constant_names = 'D0        N1      N2      N3     s        ds      evj'
-        constant_expressions = '${D0}   ${N1}   ${N2}   ${N3}   ${s}    ${ds}   ${evj}'
-        expression = 'D0*(ds^0/evj)*(c1*10^(5*(1-c1-c2)-1) + c2*10^(15*(1-c1-c2)-3))/(1/(c2*N2) + 1/((1-c1-c2)*N3))/s'
+        constant_names = 'M        s'
+        constant_expressions = '${M}   ${s}'
+        expression = 'if(1-c1-c2>0, M*c2^2*(1-c1-c2)^2/s, 0)'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
     []
@@ -199,9 +228,9 @@ D0 = ${fparse 1e-16*ds^2}
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c1 c2'
-        constant_names = 'R      T      v       chi12      chi13       chi23     N1        N2      N3       s      beta     ds     evj'
-        constant_expressions = '${R}    ${T}    ${v}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}    ${ds}   ${evj}'
-        expression = '(s*evj/ds^0)*(R*(T/v)*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
+        constant_names =        'chi12      chi13       chi23     N1        N2      N3       s     beta'
+        constant_expressions = '${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
+        expression = 'if(c2>0, if(c1>0, if(1-c1-c2>0, s*((c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))), s*((c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2 + beta*(1/c1 + 1/c2)))), if(1-c2>0, s*(((1-c2)*log(1-c2)/N3 + c2*log(c2)/N2 + chi23*c2*(1-c2) + beta*(1/(1-c2) + 1/c2))), s*((c2*log(c2)/N2 + beta*(1/c2))))), if(c1>0, if(1-c1>0, s*((c1*log(c1)/N1 + (1-c1)*log(1-c1)/N3 + chi13*c1*(1-c1) + beta*(1/c1 + 1/(1-c1)))), s*(((1-c1)*log(1-c1)/N3 + beta*(1/(1-c1))))), 0))'
         derivative_order = 2
     []
     # beta penalty term
@@ -260,20 +289,23 @@ D0 = ${fparse 1e-16*ds^2}
     scheme = bdf2
 
     # petsc_options = '-pc_svd_monitor -ksp_view'
-    petsc_options = '-ksp_converged_reason -snes_converged_reason'
-    # petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
+    # petsc_options = '-ksp_converged_reason -snes_converged_reason'
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
 
     # petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     # petsc_options_value = 'asm      31                  preonly      ilu          1'
 
-    line_search = 'basic'
+    petsc_options_iname = '-pc_type -ksp_type'
+    petsc_options_value = 'gamg      gmres'
 
-    petsc_options_iname = '-pc_type'
-    petsc_options_value = 'lu'
+    # line_search = 'basic'
+
+    # petsc_options_iname = '-pc_type'
+    # petsc_options_value = 'lu'
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    l_max_its = 200
+    l_max_its = 100
     nl_max_its = 50
     nl_abs_tol = 1e-10
 
@@ -290,7 +322,7 @@ D0 = ${fparse 1e-16*ds^2}
 
     # Automatic scaling for u and w
     automatic_scaling = true
-    scaling_group_variables = 'c1 w1; c2 w2'
+    scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -312,6 +344,6 @@ D0 = ${fparse 1e-16*ds^2}
     []
 []
 
-# [Debug]
-#     show_var_residual_norms = true
-# []
+[Debug]
+    show_var_residual_norms = true
+[]

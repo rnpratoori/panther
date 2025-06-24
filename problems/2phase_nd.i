@@ -1,47 +1,31 @@
 nx = 400     # number of elements per side
 ny = 100      # number of elements per side
-dx = 4e2       # ND size of the side
-dy = 1e2       # ND size of the side
-ds = 1e9   
-# evj = 1  # electron volt to Joule conversion factor       
-evj = 6.24e18  # e      lectron volt to Joule conversion factor       
-a = 0.5     # type A monomer density
-# M = 1e0     # Initial mobility, depends on swell ratio
-S = 1e-25    # Scaling factor
-# Cn = 5e-2   # Cahn number
-# k = ${fparse Cn^2}    # gradient energy coefficient
-g = ${fparse 33e-3}
-# g = ${fparse 33e-3*evj}
-k = ${fparse 2*0.228*g^2}    # gradient energy coefficient
-# k = ${fparse 0.228*g^2/ds}    # gradient energy coefficient
+dx = 4       # ND size of the side
+dy = 1       # ND size of the side
+a = 0.3     # type A monomer density
+M = 1e0     # Initial mobility, depends on swell ratio
+S = 1e-0    # Scaling factor
+Cn = 5e-2   # Cahn number
+k = ${fparse Cn^2}    # gradient energy coefficient
 
 # 1 - drug
 # 2 - polymer
-# Flory-Huggins approximation
 chi12 = 0.42   # Flory-Huggins parameter
 N1 = 10        # Degree of polymerisation
 N2 = 100        # Degree of polymerisation
-R = ${fparse 8.314}         # Universal gas c   onstant
-# R = ${fparse 8.314*evj}         # Universal gas constant
-T = 298         # Temperature in Kelvin
-v = ${fparse 40e-6}
-# v = ${fparse 40e-6*ds^3}
-# beta = ${fparse 1e-5}
-beta = ${fparse 1e-5*R*T/v}
-D0 = ${fparse 1e-16}
-# D0 = ${fparse 1e-16*ds^2}
+beta = ${fparse 1e-5}
 
 [Mesh]
-    # [2p]
+    [2p]
         # generate a 2D mesh
-        type = GeneratedMesh
+        type = GeneratedMeshGenerator
         dim = 2
         nx = ${nx}
         ny = ${ny}
         xmax = ${dx}
         ymax = ${dy}
         # uniform_refine = 2
-    # []
+    []
 []
 
 [Variables]
@@ -133,7 +117,7 @@ D0 = ${fparse 1e-16}
     [mat]
         type = GenericFunctionMaterial
         prop_names = 'kappa M'
-        prop_values = '${fparse k*evj*S*ds^2}   ${fparse D0*ds^2/(evj*1.36e7*S)}'
+        prop_values = '${fparse k*S}   ${fparse M/S}'
     []
     # [mobility1]
     #     type = DerivativeParsedMaterial
@@ -151,9 +135,9 @@ D0 = ${fparse 1e-16}
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names = 'chi12      N1        N2       S      beta     evj'
-        constant_expressions = '${chi12}    ${N1}   ${N2}    ${S}    ${beta}    ${evj}'
-        expression = '(S*evj)*((c*log(c)/N1 + (1-c)*log(1-c)/N2 + chi12*c*(1-c)) + beta*(1/c + 1/(1-c)))'
+        constant_names = 'chi12      N1        N2       S      beta'
+        constant_expressions = '${chi12}    ${N1}   ${N2}    ${S}    ${beta}'
+        expression = '(S)*((c*log(c)/N1 + (1-c)*log(1-c)/N2 + chi12*c*(1-c)) + beta*(1/c + 1/(1-c)))'
         derivative_order = 2
     []
     # Total free energy
@@ -203,7 +187,7 @@ D0 = ${fparse 1e-16}
     # petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
 
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'lu      31                  preonly      ilu          1'
+    petsc_options_value = 'asm      31                  preonly      ilu          1'
 
 
     # petsc_options_iname = '-pc_type'
@@ -230,7 +214,7 @@ D0 = ${fparse 1e-16}
         optimal_iterations = 10
     []
 
-    end_time = 1e4 # seconds
+    end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
@@ -246,12 +230,12 @@ D0 = ${fparse 1e-16}
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2phase_spline
+        file_base = output/2phase_nd_2
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2phase_spline
+        file_base = output/2phase_nd_2
     []
 []
