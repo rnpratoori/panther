@@ -27,14 +27,14 @@ delta = 0.025
     dim = 2
     nx = 400
     ny = 300
-    xmax = 4
-    ymax = 3
+    xmax = 400
+    ymax = 300
   []
   [top_block]
     type = ParsedSubdomainMeshGenerator
     input = main
     block_id = 1
-    combinatorial_geometry = 'y > 1'
+    combinatorial_geometry = 'y > 100'
   []
 []
 
@@ -82,16 +82,16 @@ delta = 0.025
         type = RandomIC
         variable = c1
         seed = 123
-        min = '${fparse delta*0.95}'
-        max = '${fparse delta*1.05}'
+        min = '${fparse delta*0.5}'
+        max = '${fparse delta*1.5}'
         block = 1
     []
     [top_c2]
         type = RandomIC
         variable = c2
         seed = 12
-        min = '${fparse delta*0.95}'
-        max = '${fparse delta*1.05}'
+        min = '${fparse delta*0.5}'
+        max = '${fparse delta*1.5}'
         block = 1
     []
 []
@@ -103,9 +103,9 @@ delta = 0.025
       system_variables = 'c c2'
       timestep = LATEST
     []
-    # [./normal_noise]
-    #     type = ConservedNormalNoise
-    # [../]
+    [./normal_noise]
+        type = ConservedNormalNoise
+    [../]
 []
 
 [AuxVariables]
@@ -158,18 +158,18 @@ delta = 0.025
         kappa_name = kappa
         w = w2
     []
-    # [./conserved_langevin1]
-    #     type = ConservedLangevinNoise
-    #     amplitude = 0.05
-    #     variable = c1
-    #     noise = normal_noise
-    # []
-    # [./conserved_langevin2]
-    #     type = ConservedLangevinNoise
-    #     amplitude = 0.05
-    #     variable = c2
-    #     noise = normal_noise
-    # []
+    [./conserved_langevin1]
+        type = ConservedLangevinNoise
+        amplitude = 0.02
+        variable = c1
+        noise = normal_noise
+    []
+    [./conserved_langevin2]
+        type = ConservedLangevinNoise
+        amplitude = 0.02
+        variable = c2
+        noise = normal_noise
+    []
 []
 
 [AuxKernels]
@@ -208,7 +208,8 @@ delta = 0.025
         coupled_variables = 'c1 c2'
         constant_names = 'M        s'
         constant_expressions = '${M}   ${s}'
-        expression = 'if(1-c1-c2>0, M*c1^2*(1-c1-c2)^2/s, 0)'
+        # expression = 'if(1-c1-c2>0, M*c1^2*(1-c1-c2)^2/s, 0)'
+        expression = '(M*10^(5*(1-c1-c2)-1)/1.58)/s'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
     []
@@ -218,7 +219,9 @@ delta = 0.025
         coupled_variables = 'c1 c2'
         constant_names = 'M        s'
         constant_expressions = '${M}   ${s}'
-        expression = 'if(1-c1-c2>0, M*c2^2*(1-c1-c2)^2/s, 0)'
+        expression = '(M*10^(15*(1-c1-c2)-3)/(0.79))/s'
+        # expression = 'if(1-c1-c2>0, M*c2^2*(1-c1-c2)^2/s, 0)'
+        # expression = '(M)/s'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
     []
@@ -230,7 +233,8 @@ delta = 0.025
         coupled_variables = 'c1 c2'
         constant_names =        'chi12      chi13       chi23     N1        N2      N3       s     beta'
         constant_expressions = '${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
-        expression = 'if(c2>0, if(c1>0, if(1-c1-c2>0, s*((c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))), s*((c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2 + beta*(1/c1 + 1/c2)))), if(1-c2>0, s*(((1-c2)*log(1-c2)/N3 + c2*log(c2)/N2 + chi23*c2*(1-c2) + beta*(1/(1-c2) + 1/c2))), s*((c2*log(c2)/N2 + beta*(1/c2))))), if(c1>0, if(1-c1>0, s*((c1*log(c1)/N1 + (1-c1)*log(1-c1)/N3 + chi13*c1*(1-c1) + beta*(1/c1 + 1/(1-c1)))), s*(((1-c1)*log(1-c1)/N3 + beta*(1/(1-c1))))), 0))'
+        expression = 'if(1-c1-c2>0, s*((c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2) + beta*(1/c1^2 + 1/c2^2 + 1/(1-c1-c2)^2))), s*((c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2 + beta*(1/c1^2 + 1/c2^2))))'
+        # expression = 'if(c2>0, if(c1>0, if(1-c1-c2>0, s*((c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2) + beta*(1/c1^2 + 1/c2^2 + 1/(1-c1-c2)^2))), s*((c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2 + beta*(1/c1^2 + 1/c2^2)))), if(1-c2>0, s*(((1-c2)*log(1-c2)/N3 + c2*log(c2)/N2 + chi23*c2*(1-c2) + beta*(1/(1-c2)^2 + 1/c2^2))), s*((c2*log(c2)/N2 + beta*(1/c2^2))))), if(c1>0, if(1-c1>0, s*((c1*log(c1)/N1 + (1-c1)*log(1-c1)/N3 + chi13*c1*(1-c1) + beta*(1/c1^2 + 1/(1-c1)^2))), s*(((1-c1)*log(1-c1)/N3 + beta*(1/(1-c1)^2)))), 0))'
         derivative_order = 2
     []
     # beta penalty term

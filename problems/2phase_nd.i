@@ -1,11 +1,11 @@
 nx = 400     # number of elements per side
 ny = 100      # number of elements per side
-dx = 4       # ND size of the side
-dy = 1       # ND size of the side
+dx = 400       # ND size of the side
+dy = 100       # ND size of the side
 a = 0.3     # type A monomer density
 M = 1e0     # Initial mobility, depends on swell ratio
 S = 1e-0    # Scaling factor
-Cn = 5e-2   # Cahn number
+Cn = 5e-0   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 # 1 - drug
@@ -214,7 +214,7 @@ beta = ${fparse 1e-5}
         optimal_iterations = 10
     []
 
-    end_time = 1e0 # seconds
+    end_time = 1e4 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
