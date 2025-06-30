@@ -197,6 +197,7 @@ delta = 0
         coupled_variables = 'c1 c3'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
+        # expression = '(M)/s'
         expression = '(M*16*c1^2*(1-c1)^2)/s'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
@@ -208,8 +209,8 @@ delta = 0
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
         # expression = 'if (c3>0, if(c3<1, (M)/s, 0), 0)'
-        # expression = '(M)/s'
-        expression = '(M*16*c3^2*(1-c3)^2)/s'
+        expression = '(M)/s'
+        # expression = '(M*16*c3^2*(1-c3)^2)/s'
         # derivative_order = 2
     []
     # mixing energy based on
