@@ -1,6 +1,6 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.67     # type A monomer density
+a = 0.3     # type A monomer density
 chi = 1.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
 M = 1e0       # Initial mobility, depends on swell ratio
