@@ -1,8 +1,8 @@
 nx = 100     # number of elements in x
-ny = 102     # number of elements in y
+ny = 300     # number of elements in y
 dx = 1.00       # ND size of the side in x
-dy = 1.00       # ND size of the side in y
-M = 1e-0       # Initial mobility, depends on swell ratio
+dy = 3.00       # ND size of the side in y
+M = 1e-2       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
@@ -16,7 +16,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
 beta = 1.0e-3       # Stability parameter
-delta = 0
+delta = 0.025
 
 [Mesh]
     [2d]
@@ -33,7 +33,7 @@ delta = 0
     [c3_domain]
         type = ParsedSubdomainMeshGenerator
         block_id = 1
-        combinatorial_geometry = 'y > ${nx}/${ny}'
+        combinatorial_geometry = 'y > 1'
         input = 2d
         # uniform_refine = 2
     []
@@ -51,12 +51,12 @@ delta = 0
         family = LAGRANGE
     []
     # polymer volume fraction
-    [c3]
+    [c2]
         order = FIRST
         family = LAGRANGE
     []
     # Chemical potential (nJ/mol)
-    [w3]
+    [w2]
         order = FIRST
         family = LAGRANGE
     []
@@ -70,10 +70,11 @@ delta = 0
         variable = c1
         block = 0
     []
-    [c3]
-        type = ConstantIC
-        value = ${delta}
-        variable = c3
+    [c2]
+        type = SolutionIC
+        from_variable = 'c2'
+        solution_uo = 2phase
+        variable = c2
         block = 0
     []
     [top_c1]
@@ -82,10 +83,10 @@ delta = 0
         variable = c1
         block = 1
     []
-    [top_c3]
+    [top_c2]
         type = ConstantIC
-        value = ${fparse 1-delta}
-        variable = c3
+        value = ${delta}
+        variable = c2
         block = 1
     []
 []
@@ -94,7 +95,7 @@ delta = 0
   [2phase]
     type = SolutionUserObject
     mesh = 'output/2phase_spline.e'
-    system_variables = 'c'
+    system_variables = 'c c2'
     timestep = LATEST
   []
 []
@@ -124,28 +125,28 @@ delta = 0
     [coupled_parsed1]
         type = SplitCHParsed
         variable = c1
-        coupled_variables = 'c3'
+        coupled_variables = 'c2'
         f_name = f_mix
         kappa_name = kappa
         w = w1
     []
-    [w3_dot]
+    [w2_dot]
         type = CoupledTimeDerivative
-        variable = w3
-        v = c3
+        variable = w2
+        v = c2
     []
-    [coupled_res3]
+    [coupled_res2]
         type = SplitCHWRes
-        variable = w3
-        mob_name = M3
+        variable = w2
+        mob_name = M2
     []
-    [coupled_parsed3]
+    [coupled_parsed2]
         type = SplitCHParsed
-        variable = c3
+        variable = c2
         coupled_variables = 'c1'
         f_name = f_mix
         kappa_name = kappa
-        w = w3
+        w = w2
     []
 []
 
@@ -156,7 +157,7 @@ delta = 0
         variable = f_density
         f_name = 'f_tot'
         kappa_names = 'kappa kappa'
-        interfacial_vars = 'c1 c3'
+        interfacial_vars = 'c1 c2'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -168,22 +169,22 @@ delta = 0
     []
 []
 
-[BCs]
-    [top1]
-        type = DirichletBC
-        variable = c1
-        boundary = 2
-        # block = 1
-        value = ${delta}
-    []
-    [top3]
-        type = DirichletBC
-        variable = c3
-        boundary = 2
-        # block = 1
-        value = ${fparse 1-delta}
-    []
-[]
+# [BCs]
+#     [top1]
+#         type = DirichletBC
+#         variable = c1
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+#     [top2]
+#         type = DirichletBC
+#         variable = c2
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+# []
 
 [Materials]
     [mat]
@@ -194,23 +195,23 @@ delta = 0
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M1
-        coupled_variables = 'c1 c3'
+        coupled_variables = 'c1 c2'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        # expression = '(M)/s'
-        expression = '(M*16*c1^2*(1-c1)^2)/s'
+        # expression = 'M/s'
+        expression = '(M*exp(15*(1-c1-c2)-3)/5.5)/s'
+        # expression = '(M*16*c1^2*(1-c1)^2)/s'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
     []
-    [mobility3]
+    [mobility2]
         type = DerivativeParsedMaterial
-        property_name = M3
-        coupled_variables = 'c1 c3'
+        property_name = M2
+        coupled_variables = 'c1 c2'
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
-        # expression = 'if (c3>0, if(c3<1, (M)/s, 0), 0)'
-        expression = '(M)/s'
-        # expression = '(M*16*c3^2*(1-c3)^2)/s'
+        # expression = 'M/s'
+        expression = '(M*exp(15*(1-c1-c2)-3)/5.5)/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -220,20 +221,21 @@ delta = 0
         triangle_file = 'triangles.csv'      
         coefficient_file = 'coefficients.csv'      
         property_name = 'f_mix'           
-        coupled_variables = 'c1 c3'          
+        coupled_variables = 'c1 c2'          
         derivative_order = 2                 
     []
     # beta penalty term
     [beta_penalty]
         type = DerivativeParsedMaterial
-        property_name = 'f_beta'
-        coupled_variables = 'c1 c3'
+        property_name = f_beta
+        coupled_variables = 'c1 c2'
         constant_names = 'beta'
         constant_expressions = '${beta}'
-        expression = 'if (c1>0, if(c3>0, if(1-c1-c3>0, beta*(1/c1 + 1/c3 + 1/(1 - c1 - c3)), beta*(1/c1 + 1/c3)),
-                    if(1-c1-c3>0, beta*(1/c1 + 1/(1 - c1 - c3)), beta*(1/c1))),
-                    if(c3>0, if(1-c1-c3>0, beta*(1/c3 + 1/(1 - c1 - c3)), beta*(1/c3)),
-                    if(1-c1-c3>0, beta*(1/(1-c1-c3)), 0)))'
+        # expression = 'if (1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2))'
+        expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2)),
+                    if(1-c1-c2>0, beta*(1/c1 + 1/(1 - c1 - c2)), beta*(1/c1))),
+                    if(c2>0, if(1-c1-c2>0, beta*(1/c2 + 1/(1 - c1 - c2)), beta*(1/c2)),
+                    if(1-c1-c2>0, beta*(1/(1-c1-c2)), 0)))'
         derivative_order = 2
     []
     # Total free energy
@@ -241,7 +243,7 @@ delta = 0
     [free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
-        coupled_variables = 'c1 c3'
+        coupled_variables = 'c1 c2'
         sum_materials = 'f_mix f_beta'
         derivative_order = 2
     []
@@ -308,12 +310,12 @@ delta = 0
 
     # dt = 1.0e-8
 
-    end_time = 1e0 # seconds
+    end_time = 1e2 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
     # off_diagonal_
-    scaling_group_variables = 'c1 c3; w1 w3'
+    scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -325,13 +327,13 @@ delta = 0
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_spline
+        file_base = output/3p_dis_spline_nodbc
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_spline
+        file_base = output/3p_dis_spline_nodbc
     []
 []
 
