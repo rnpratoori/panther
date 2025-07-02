@@ -113,7 +113,7 @@ def main(exodus_filename, output_filename):
     
     # Create a PyVista plotter in off-screen mode
     plotter = pv.Plotter(off_screen=True)
-    plotter.open_gif(output_filename)
+    plotter.open_movie(output_filename, framerate=480)
     
     # Add the three meshes with custom colormaps
     plotter.add_mesh(mesh_c1, scalars='c1', clim=(0, 1), 
@@ -145,10 +145,10 @@ if __name__ == "__main__":
     # Process all .e files in the results/output_dump_3p directory
     input_dir = "output"
     for exodus_file in sorted(os.listdir(input_dir)):
-        if exodus_file.endswith('_bcic_t2.e'):
+        if exodus_file.endswith('_dis_spline.e'):
             exodus_path = os.path.join(input_dir, exodus_file)
             # Create output filename by replacing .e with .gif
-            output_filename = os.path.join(input_dir, exodus_file.replace('.e', '_v3.gif'))
+            output_filename = os.path.join(input_dir, exodus_file.replace('.e', '_v3_Mexp.mp4'))
             print(f"Processing {exodus_file}...")
             main(exodus_path, output_filename)
             print(f"Created {output_filename}")
