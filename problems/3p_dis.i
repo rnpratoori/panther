@@ -1,24 +1,22 @@
 nx = 100     # number of elements in x
-ny = 120     # number of elements in y
+ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
-dy = 1.20       # ND size of the side in y
-# a = 0.3     # type A monomer density
-# b = 0.3     # type B monomer density
+dy = 1.02       # ND size of the side in y
 chi12 = 2.0   # Flory-Huggins parameter
 chi13 = 0.1   # Flory-Huggins parameter
 chi23 = 0.1   # Flory-Huggins parameter
 N1 = 5       # Degree of polymerisation
 N2 = 5       # Degree of polymerisation
 N3 = 1       # Degree of polymerisation
-M = 1e-0       # Initial mobility, depends on swell ratio
+M = 1e-3       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
-beta = ${fparse 1e-3*R*T}
-delta = 0
+beta = ${fparse 0e-3*R*T}
+delta = 1e-2
 
 [Mesh]
     [2d]
@@ -72,10 +70,10 @@ delta = 0
         block = 0
     []
     [c2]
-        type = SolutionIC
-        from_variable = 'c2'
-        solution_uo = 2phase
+        type = CoupledValueFunctionIC
+        function = c_2phase
         variable = c2
+        v = c1
         block = 0
     []
     [top_c1]
@@ -89,6 +87,13 @@ delta = 0
         value = ${delta}
         variable = c2
         block = 1
+    []
+[]
+
+[Functions]
+    [c_2phase]
+      type = ParsedFunction
+      expression = '1 - x - ${delta}'
     []
 []
 
@@ -197,18 +202,18 @@ delta = 0
         type = DerivativeParsedMaterial
         property_name = M1
         coupled_variables = 'c1 c2'
-        constant_names = 'M     s'
-        constant_expressions = '${M} ${s}'
-        expression = '(M*10^(5*(1-c1-c2)-1))/s'
+        constant_names = 'M     s       delta'
+        constant_expressions = '${M} ${s}   ${delta}'
+        expression = '(M*exp(1*(1-c1-c2-delta)-0.2))/s'
         # derivative_order = 2
     []
     [mobility2]
         type = DerivativeParsedMaterial
         property_name = M2
         coupled_variables = 'c1 c2'
-        constant_names = 'M     s'
-        constant_expressions = '${M} ${s}'
-        expression = '(M*10^(5*(1-c1-c2)-0))/s'
+        constant_names = 'M     s   delta'
+        constant_expressions = '${M} ${s}   ${delta}'
+        expression = '(M*exp(1*(1-c1-c2-delta)-0.2))/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -219,11 +224,11 @@ delta = 0
         coupled_variables = 'c1 c2'
         constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s     beta'
         constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}    ${N1}   ${N2}   ${N3}    ${s}    ${beta}'
-        # expression = 'if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2))), s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2)))'
-        expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2))), s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2))),
-            if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + (1-c1-c2)*log(1-c1-c2)/N3 + chi13*c1*(1-c1-c2))), s*R*T*(c1*log(c1)/N1))),
-            if(c2>0, if(1-c1-c2>0, s*(R*T*(c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi23*c2*(1-c1-c2))), s*R*T*(c2*log(c2)/N2)),
-            if(1-c1-c2>0, s*R*T*((1-c1-c2)*log(1-c1-c2)/N3), 0)))'
+        expression = 's*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)))'
+        # expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2))), s*(R*T*(c1*log(c1)/N1 + c2*log(c2)/N2 + chi12*c1*c2))),
+            # if(1-c1-c2>0, s*(R*T*(c1*log(c1)/N1 + (1-c1-c2)*log(1-c1-c2)/N3 + chi13*c1*(1-c1-c2))), s*R*T*(c1*log(c1)/N1))),
+            # if(c2>0, if(1-c1-c2>0, s*(R*T*(c2*log(c2)/N2 + (1-c1-c2)*log(1-c1-c2)/N3 + chi23*c2*(1-c1-c2))), s*R*T*(c2*log(c2)/N2)),
+            # if(1-c1-c2>0, s*R*T*((1-c1-c2)*log(1-c1-c2)/N3), 0)))'
         derivative_order = 2
     []
     # beta penalty term
@@ -233,11 +238,11 @@ delta = 0
         coupled_variables = 'c1 c2'
         constant_names = 'beta'
         constant_expressions = '${beta}'
-        # expression = 'if (1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2))'
-        expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2)),
-                    if(1-c1-c2>0, beta*(1/c1 + 1/(1 - c1 - c2)), beta*(1/c1))),
-                    if(c2>0, if(1-c1-c2>0, beta*(1/c2 + 1/(1 - c1 - c2)), beta*(1/c2)),
-                    if(1-c1-c2>0, beta*(1/(1-c1-c2)), 0)))'
+        expression = 'beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2))'
+        # expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2)),
+                    # if(1-c1-c2>0, beta*(1/c1 + 1/(1 - c1 - c2)), beta*(1/c1))),
+                    # if(c2>0, if(1-c1-c2>0, beta*(1/c2 + 1/(1 - c1 - c2)), beta*(1/c2)),
+                    # if(1-c1-c2>0, beta*(1/(1-c1-c2)), 0)))'
         derivative_order = 2
     []
     # Total free energy
@@ -307,8 +312,8 @@ delta = 0
     end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'c1 c2; w1 w2'
+    automatic_scaling = true
+    scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
