@@ -10,12 +10,12 @@ N2 = 5       # Degree of polymerisation
 N3 = 1       # Degree of polymerisation
 M = 1e-3       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-Cn = 5e-2  # Cahn number
+Cn = 5e-1  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
-beta = ${fparse 0e-3*R*T}
+beta = ${fparse 1e-3*R*T}
 delta = 1e-2
 
 [Mesh]
@@ -64,18 +64,32 @@ delta = 1e-2
 [ICs]
     [c1]
         type = SolutionIC
-        from_variable = 'c'
+        from_variable = 'c1_scaled'
         solution_uo = 2phase
         variable = c1
         block = 0
     []
     [c2]
-        type = CoupledValueFunctionIC
-        function = c_2phase
+        type = SolutionIC
+        from_variable = 'c2_scaled'
+        solution_uo = 2phase
         variable = c2
-        v = c1
         block = 0
     []
+    # [c1]
+    #     type = SolutionIC
+    #     from_variable = 'c'
+    #     solution_uo = 2phase
+    #     variable = c1
+    #     block = 0
+    # []
+    # [c2]
+    #     type = CoupledValueFunctionIC
+    #     function = c_2phase
+    #     variable = c2
+    #     v = c1
+    #     block = 0
+    # []
     [top_c1]
         type = ConstantIC
         value = ${delta}
@@ -98,10 +112,16 @@ delta = 1e-2
 []
 
 [UserObjects]
+#   [2phase]
+#     type = SolutionUserObject
+#     mesh = 'output/2phase_fh.e'
+#     system_variables = 'c c2'
+#     timestep = LATEST
+#   []
   [2phase]
     type = SolutionUserObject
-    mesh = 'output/2phase_fh.e'
-    system_variables = 'c c2'
+    mesh = 'output/2phase_copy_scaled.e'
+    system_variables = 'c1_scaled c2_scaled'
     timestep = LATEST
   []
 []
@@ -132,7 +152,7 @@ delta = 1e-2
         type = SplitCHParsed
         variable = c1
         coupled_variables = 'c2'
-        f_name = f_mix
+        f_name = f_tot
         kappa_name = kappa
         w = w1
     []
@@ -150,7 +170,7 @@ delta = 1e-2
         type = SplitCHParsed
         variable = c2
         coupled_variables = 'c1'
-        f_name = f_mix
+        f_name = f_tot
         kappa_name = kappa
         w = w2
     []
@@ -175,22 +195,22 @@ delta = 1e-2
     []
 []
 
-[BCs]
-    [top1]
-        type = DirichletBC
-        variable = c1
-        boundary = 2
-        # block = 1
-        value = ${delta}
-    []
-    [top2]
-        type = DirichletBC
-        variable = c2
-        boundary = 2
-        # block = 1
-        value = ${delta}
-    []
-[]
+# [BCs]
+#     [top1]
+#         type = DirichletBC
+#         variable = c1
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+#     [top2]
+#         type = DirichletBC
+#         variable = c2
+#         boundary = 2
+#         # block = 1
+#         value = ${delta}
+#     []
+# []
 
 [Materials]
     [mat]
@@ -204,7 +224,9 @@ delta = 1e-2
         coupled_variables = 'c1 c2'
         constant_names = 'M     s       delta'
         constant_expressions = '${M} ${s}   ${delta}'
-        expression = '(M*exp(1*(1-c1-c2-delta)-0.2))/s'
+        # expression = '(M*(1-c1-c2)*c1*c2)/s'
+        # expression = '(M*(1-c1-c2-delta)^2)/s'
+        expression = '(M*exp(5*(1-c1-c2)-1))/s'
         # derivative_order = 2
     []
     [mobility2]
@@ -213,7 +235,9 @@ delta = 1e-2
         coupled_variables = 'c1 c2'
         constant_names = 'M     s   delta'
         constant_expressions = '${M} ${s}   ${delta}'
-        expression = '(M*exp(1*(1-c1-c2-delta)-0.2))/s'
+        # expression = '(M*(1-c1-c2)*c1*c2)/s'
+        # expression = '(M*(1-c1-c2-delta)^2)/s'
+        expression = '(M*exp(5*(1-c1-c2)-1))/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -290,6 +314,9 @@ delta = 1e-2
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
 
+    # petsc_options_iname = '-pc_type'
+    # petsc_options_value = 'lu'
+
     line_search = 'basic'
 
     l_tol = 1e-10
@@ -312,8 +339,8 @@ delta = 1e-2
     end_time = 1e0 # seconds
 
     # Automatic scaling for u and w
-    automatic_scaling = true
-    scaling_group_variables = 'c1 c2; w1 w2'
+    # automatic_scaling = true
+    # scaling_group_variables = 'c1 c2; w1 w2'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
