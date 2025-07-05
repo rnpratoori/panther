@@ -2,7 +2,7 @@ nx = 100     # number of elements in x
 ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 1.02       # ND size of the side in y
-chi12 = 2.0   # Flory-Huggins parameter
+chi12 = 1.0   # Flory-Huggins parameter
 chi13 = 0.1   # Flory-Huggins parameter
 chi23 = 0.1   # Flory-Huggins parameter
 N1 = 5       # Degree of polymerisation
@@ -321,8 +321,8 @@ delta = 1e-2
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    l_max_its = 30
-    nl_max_its = 30
+    l_max_its = 200
+    nl_max_its = 100
     nl_abs_tol = 1e-10
 
     [TimeStepper]
