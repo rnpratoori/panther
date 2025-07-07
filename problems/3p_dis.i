@@ -1,20 +1,71 @@
 nx = 100     # number of elements in x
-ny = 300     # number of elements in y
+ny = 102     # number of elements in y
 dx = 1.00       # ND size of the side in x
-dy = 3.00       # ND size of the side in y
-M = 1e-2       # Initial mobility, depends on swell ratio
+dy = 1.02       # ND size of the side in y
+M = 1e0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
-# chi12 = 2.0   # Flory-Huggins parameter
-# chi13 = 0.1   # Flory-Huggins parameter
-# chi23 = 0.1   # Flory-Huggins parameter
+chi12 = 1.0   # Flory-Huggins parameter
+chi13 = 0.1   # Flory-Huggins parameter
+chi23 = 0.1   # Flory-Huggins parameter
 # N1 = 5       # Degree of polymerisation
 # N2 = 5       # Degree of polymerisation
 # N3 = 1       # Degree of polymerisation
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
+A00 = -0.485203
+A10 = -0.384112
+A20 = 1.4
+A30 = 0.133333
+A40 = 1.73333
+A50 = -1.76
+A60 = 7.89333
+A01 = -0.384112
+A11 = 2.0
+A21 = 2.0
+A31 = 2.66667
+A41 = 4.0
+A51 = 6.4
+A61 = 10.6667
+A02 = 1.4
+A12 = 2.0
+A22 = 4.0
+A32 = 8.0
+A42 = 16.0
+A52 = 32.0
+A62 = 64.0
+A03 = 0.133333
+A13 = 2.66667
+A23 = 8.0
+A33 = 21.3333
+A43 = 53.3333
+A53 = 128.0
+A63 = 298.667
+A04 = 1.73333
+A14 = 4.0
+A24 = 16.0
+A34 = 53.3333
+A44 = 160.0
+A54 = 448.0
+A64 = 1194.67
+A05 = -1.76
+A15 = 6.4
+A25 = 32.0
+A35 = 128.0
+A45 = 448.0
+A55 = 1433.6
+A65 = 4300.8
+A06 = 7.89333
+A16 = 10.6667
+A26 = 64.0
+A36 = 298.667
+A46 = 1194.67
+A56 = 4300.8
+A66 = 14336.0
+c1_0 = 0.25
+c2_0 = 0.25
 beta = 1.0e-3       # Stability parameter
 delta = 0.025
 
@@ -94,7 +145,7 @@ delta = 0.025
 [UserObjects]
   [2phase]
     type = SolutionUserObject
-    mesh = 'output/2phase_spline.e'
+    mesh = 'output/2phase_taylor.e'
     system_variables = 'c c2'
     timestep = LATEST
   []
@@ -169,22 +220,22 @@ delta = 0.025
     []
 []
 
-# [BCs]
-#     [top1]
-#         type = DirichletBC
-#         variable = c1
-#         boundary = 2
-#         # block = 1
-#         value = ${delta}
-#     []
-#     [top2]
-#         type = DirichletBC
-#         variable = c2
-#         boundary = 2
-#         # block = 1
-#         value = ${delta}
-#     []
-# []
+[BCs]
+    [top1]
+        type = DirichletBC
+        variable = c1
+        boundary = 2
+        # block = 1
+        value = ${delta}
+    []
+    [top2]
+        type = DirichletBC
+        variable = c2
+        boundary = 2
+        # block = 1
+        value = ${delta}
+    []
+[]
 
 [Materials]
     [mat]
@@ -217,11 +268,34 @@ delta = 0.025
     # mixing energy based on
     # Flory-Huggins theory
     [mixing_energy]
-        type = DerivativeSpline2Material
-        triangle_file = 'triangles.csv'      
-        coefficient_file = 'coefficients.csv'      
+        type = DerivativeParsedMaterial
         property_name = 'f_mix'           
-        coupled_variables = 'c1 c2'          
+        coupled_variables = 'c1 c2'
+        constant_names =      'A00    A10    A20    A30    A40    A50    A60
+                                A01    A11    A21    A31    A41    A51    A61
+                                A02    A12    A22    A32    A42    A52    A62
+                                A03    A13    A23    A33    A43    A53    A63
+                                A04    A14    A24    A34    A44    A54    A64
+                                A05    A15    A25    A35    A45    A55    A65
+                                A06    A16    A26    A36    A46    A56    A66
+                                s      c1_0   c2_0  chi12   chi13   chi23'
+        constant_expressions = '${A00} ${A10} ${A20} ${A30} ${A40} ${A50} ${A60}
+                                ${A01} ${A11} ${A21} ${A31} ${A41} ${A51} ${A61}
+                                ${A02} ${A12} ${A22} ${A32} ${A42} ${A52} ${A62}
+                                ${A03} ${A13} ${A23} ${A33} ${A43} ${A53} ${A63}
+                                ${A04} ${A14} ${A24} ${A34} ${A44} ${A54} ${A64}
+                                ${A05} ${A15} ${A25} ${A35} ${A45} ${A55} ${A65}
+                                ${A06} ${A16} ${A26} ${A36} ${A46} ${A56} ${A66}
+                                ${s}   ${c1_0} ${c2_0} ${chi12} ${chi13} ${chi23}'
+        expression = 's*(A00 +
+                    A10*(c1-c1_0) + A01*(c2-c2_0) +
+                    A20*(c1-c1_0)^2 + A11*(c1-c1_0)*(c2-c2_0) + A02*(c2-c2_0)^2 +
+                    A30*(c1-c1_0)^3 + A21*(c1-c1_0)^2*(c2-c2_0) + A12*(c1-c1_0)*(c2-c2_0)^2 + A03*(c2-c2_0)^3 +
+                    A40*(c1-c1_0)^4 + A31*(c1-c1_0)^3*(c2-c2_0) + A22*(c1-c1_0)^2*(c2-c2_0)^2 + A13*(c1-c1_0)*(c2-c2_0)^3 + A04*(c2-c2_0)^4 +
+                    A50*(c1-c1_0)^5 + A41*(c1-c1_0)^4*(c2-c2_0) + A32*(c1-c1_0)^3*(c2-c2_0)^2 + A23*(c1-c1_0)^2*(c2-c2_0)^3 + A14*(c1-c1_0)*(c2-c2_0)^4 + A05*(c2-c2_0)^5 +
+                    A60*(c1-c1_0)^6 + A51*(c1-c1_0)^5*(c2-c2_0) + A42*(c1-c1_0)^4*(c2-c2_0)^2 + A33*(c1-c1_0)^3*(c2-c2_0)^3 + A24*(c1-c1_0)^2*(c2-c2_0)^4 + A15*(c1-c1_0)*(c2-c2_0)^5 + A06*(c2-c2_0)^6 +
+                    chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2))'
+        #      
         derivative_order = 2                 
     []
     # beta penalty term
@@ -231,11 +305,7 @@ delta = 0.025
         coupled_variables = 'c1 c2'
         constant_names = 'beta'
         constant_expressions = '${beta}'
-        # expression = 'if (1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2))'
-        expression = 'if (c1>0, if(c2>0, if(1-c1-c2>0, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2)),
-                    if(1-c1-c2>0, beta*(1/c1 + 1/(1 - c1 - c2)), beta*(1/c1))),
-                    if(c2>0, if(1-c1-c2>0, beta*(1/c2 + 1/(1 - c1 - c2)), beta*(1/c2)),
-                    if(1-c1-c2>0, beta*(1/(1-c1-c2)), 0)))'
+        expression = 'beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2))'
         derivative_order = 2
     []
     # Total free energy
@@ -244,7 +314,7 @@ delta = 0.025
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c1 c2'
-        sum_materials = 'f_mix f_beta'
+        sum_materials = 'f_mix  f_beta'
         derivative_order = 2
     []
 []
@@ -327,13 +397,13 @@ delta = 0.025
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_spline_nodbc
+        file_base = output/3p_dis_taylor
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_spline_nodbc
+        file_base = output/3p_dis_taylor
     []
 []
 
