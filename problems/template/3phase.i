@@ -10,10 +10,11 @@ chi = 2.0   # Flory-Huggins parameter
 N = 5       # Degree of polymerisation
 M = 1       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
-k = 5e-2    # gradient energy coefficient
+Cn = 5e-2  # Cahn number
+k = ${fparse Cn^2}    # gradient energy coefficient
 
-R = 8.314  # Universal gas constant
-T = 300 # Temperature in Kelvin
+R = 1  # Universal gas constant
+T = 1 # Temperature in Kelvin
 beta = 1e-3*R*T
 
 [Mesh]
@@ -127,7 +128,7 @@ beta = 1e-3*R*T
     [f_density]
         type = TotalFreeEnergy
         variable = f_density
-        f_name = 'f_tot'
+        f_name = 'f_mix'
         kappa_names = 'kappa kappa'
         interfacial_vars = 'c1 c2'
     []
@@ -158,15 +159,15 @@ beta = 1e-3*R*T
         expression = 's*(R*T*(c1*log(c1)/N + c2*log(c2)/N + (1-c1-c2)*log(1-c1-c2) + chi*c1*c2 + chi*c1*(1-c1-c2) + chi*c2*(1-c1-c2)) + beta*(1/c1 + 1/c2 + 1/(1-c1-c2)))'
         derivative_order = 2
     []
-    # Total free energy
-    # Sum of all the parts
-    [free_energy]
-        type = DerivativeSumMaterial
-        property_name = f_tot
-        coupled_variables = 'c1 c2'
-        sum_materials = 'f_mix'
-        derivative_order = 2
-    []
+    # # Total free energy
+    # # Sum of all the parts
+    # [free_energy]
+    #     type = DerivativeSumMaterial
+    #     property_name = f_tot
+    #     coupled_variables = 'c1 c2'
+    #     sum_materials = 'f_mix'
+    #     derivative_order = 2
+    # []
 []
 
 [Postprocessors]
@@ -176,8 +177,17 @@ beta = 1e-3*R*T
         variable = f_density
         execute_on = 'initial timestep_end'
     []
-    [nodes] # Number of nodes in mesh
-        type = NumNodes
+    [./elapsed]
+        type = PerfGraphData
+        section_name = "Root"
+        data_type = total
+    [../]
+[]
+
+[Preconditioning]
+    [coupled]
+      type = SMP
+      full = true
     []
 []
 
@@ -186,23 +196,26 @@ beta = 1e-3*R*T
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options_iname = '-pc_type'
-    petsc_options_value = 'lu'
+    # petsc_options_iname = '-pc_type -ksp_grmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    # petsc_options_value = 'asm      31                  preonly       lu           2'
 
+    petsc_options_iname = '-snes_rtol -snes_atol -snes_max_it -ksp_max_it -ksp_type -pc_type -ksp_atol -ksp_rtol'
+    petsc_options_value = '1e-8         1e-8       50           50          bcgs     asm         1e-8    1e-8'
+    
     # # Alternative preconditioning options using Hypre (algebraic multi-grid)
     # petsc_options_iname = '-pc_type -pc_hypre_type'
     # petsc_options_value = 'hypre    boomeramg'
 
-    l_tol = 1e-10
-    l_abs_tol = 1e-10
-    l_max_its = 30
-    nl_max_its = 30
-    nl_abs_tol = 1e-10
+    # l_tol = 1e-10
+    # l_abs_tol = 1e-10
+    # l_max_its = 30
+    # nl_max_its = 30
+    # nl_abs_tol = 1e-10
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-10
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -224,12 +237,12 @@ beta = 1e-3*R*T
 [Outputs]
     [ex]
         type = Exodus
-        file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
-        time_step_interval = 20
-        execute_on = 'TIMESTEP_END INITIAL FINAL'
+        file_base = /work/mech-ai-scratch/rnp/output_dump_timing/3phase_${a}_${b}
+        time_step_interval = 10
+        execute_on = 'TIMESTEP_END FINAL'
     []
     [csv]
         type = CSV
-        file_base = /work/mech-ai-scratch/rnp/output_dump_3p/3phase_${a}_${b}
+        file_base = /work/mech-ai-scratch/rnp/output_dump_timing/3phase_${a}_${b}
     []
 []
