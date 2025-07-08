@@ -13,6 +13,7 @@ s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
+
 R = 1  # Universal gas constant
 T = 1 # Temperature in Kelvin
 beta = 1e-3*R*T
