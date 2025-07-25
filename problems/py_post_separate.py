@@ -37,7 +37,7 @@ def main(exodus_filename, output_filename):
 
     # PyVista plotter (off-screen movie mode)
     plotter = pv.Plotter(off_screen=True)
-    plotter.open_movie(output_filename, framerate=48)
+    plotter.open_movie(output_filename, framerate=96)
     plotter.view_xy()
 
     camera_set = False
@@ -46,19 +46,9 @@ def main(exodus_filename, output_filename):
         c2 = c2_all[i]
         c3 = c3_all[i]
 
-        # Map c1 to magenta, c2 to yellow, c3 to cyan
-        # rgb_colors = np.clip(
-        #     np.stack([
-        #         c1 * 1 + c2 * 1 + c3 * 0,  # Red: c1 + c2
-        #         c1 * 0 + c2 * 1 + c3 * 1,  # Green: c2 + c3
-        #         c1 * 1 + c2 * 0 + c3 * 1   # Blue: c1 + c3
-        #     ], axis=1), 0, 1
-        # )
-        rgb_colors = np.clip(np.stack([c1,c2,c3], axis=1), 0, 1)
+        # Map c1 to red, c2 to green, c3 to white
+        rgb_colors = np.stack([c1 + c3, c2 + c3, c3], axis=1)
         rgb_colors = np.clip(rgb_colors, 0, 1)
-        hsv = mcolors.rgb_to_hsv(rgb_colors)
-        hsv[:, 1] = 1  # set saturation to max
-        rgb_colors = mcolors.hsv_to_rgb(hsv)
         mesh.point_data['rgb'] = (rgb_colors * 255).astype(np.uint8)
 
         plotter.add_mesh(mesh, scalars='rgb', rgb=True, show_scalar_bar=False)
@@ -105,7 +95,7 @@ def main_block0(exodus_filename, output_filename):
     mesh = base_mesh.copy(deep=True)
 
     plotter = pv.Plotter(off_screen=True)
-    plotter.open_movie(output_filename, framerate=48)
+    plotter.open_movie(output_filename, framerate=96)
     plotter.view_xy()
 
     camera_set = False
@@ -118,10 +108,8 @@ def main_block0(exodus_filename, output_filename):
         c2[block0_nodes] = c2_all[i][block0_nodes]
         c3[block0_nodes] = c3_all[i][block0_nodes]
 
-        rgb_colors = np.clip(np.stack([c1, c2, c3], axis=1), 0, 1)
-        hsv = mcolors.rgb_to_hsv(rgb_colors)
-        hsv[:, 1] = 1
-        rgb_colors = mcolors.hsv_to_rgb(hsv)
+        rgb_colors = np.stack([c1 + c3, c2 + c3, c3], axis=1)
+        rgb_colors = np.clip(rgb_colors, 0, 1)
         mesh.point_data['rgb'] = (rgb_colors * 255).astype(np.uint8)
 
         plotter.add_mesh(mesh, scalars='rgb', rgb=True, show_scalar_bar=False)
@@ -155,7 +143,7 @@ def main_block0_only(exodus_filename, output_filename):
     ds.close()
 
     plotter = pv.Plotter(off_screen=True)
-    plotter.open_movie(output_filename, framerate=48)
+    plotter.open_movie(output_filename, framerate=96)
     plotter.view_xy()
 
     camera_set = False
@@ -164,8 +152,9 @@ def main_block0_only(exodus_filename, output_filename):
         c2 = c2_all[i]
         c3 = c3_all[i]
 
-        # Only assign data for block 0 nodes
-        mesh_block0.point_data['rgb'] = (np.clip(np.stack([c1, c2, c3], axis=1), 0, 1) * 255).astype(np.uint8)
+        rgb_colors = np.stack([c1 + c3, c2 + c3, c3], axis=1)
+        rgb_colors = np.clip(rgb_colors, 0, 1)
+        mesh_block0.point_data['rgb'] = (rgb_colors * 255).astype(np.uint8)
 
         plotter.add_mesh(mesh_block0, scalars='rgb', rgb=True, show_scalar_bar=False)
         if not camera_set:
@@ -183,7 +172,7 @@ if __name__ == "__main__":
     # Process all .e files in the results/output_dump_3p directory
     input_dir = "output"
     for exodus_file in sorted(os.listdir(input_dir)):
-        if exodus_file.endswith('_test200_diff.e'):
+        if exodus_file.endswith('_test200.e'):
             exodus_path = os.path.join(input_dir, exodus_file)
             # Create output filename by replacing .e with .gif
             output_filename = os.path.join(input_dir, exodus_file.replace('.e', '_v3_Mexp.mp4'))
@@ -191,11 +180,11 @@ if __name__ == "__main__":
             main(exodus_path, output_filename)
             print(f"Created {output_filename}")
 
-            # # Block 0 only video
-            # output_filename_block0 = os.path.join(input_dir, exodus_file.replace('.e', '_v3_Mexp_block0.mp4'))
-            # print(f"Processing {exodus_file} (block 0 only)...")
-            # main_block0(exodus_path, output_filename_block0)
-            # print(f"Created {output_filename_block0}")
+            # Block 0 only video
+            output_filename_block0 = os.path.join(input_dir, exodus_file.replace('.e', '_v3_Mexp_block0.mp4'))
+            print(f"Processing {exodus_file} (block 0 only)...")
+            main_block0(exodus_path, output_filename_block0)
+            print(f"Created {output_filename_block0}")
 
             # Block 0 only video (alternative method)
             output_filename_block0_only = os.path.join(input_dir, exodus_file.replace('.e', '_v3_Mexp_block0_only.mp4'))
