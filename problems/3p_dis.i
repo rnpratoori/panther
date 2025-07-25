@@ -1,8 +1,8 @@
 nx = 100     # number of elements in x
-ny = 102     # number of elements in y
+ny = 200     # number of elements in y
 dx = 1.00       # ND size of the side in x
-dy = 1.02       # ND size of the side in y
-M = 1e0       # Initial mobility, depends on swell ratio
+dy = 2.00       # ND size of the side in y
+M = 1e-0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
@@ -250,7 +250,7 @@ delta = 0.025
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
         # expression = 'M/s'
-        expression = '(M*exp(15*(1-c1-c2)-3)/5.5)/s'
+        expression = '(M*exp((15*(1-c1-c2)-3)))/s'
         # expression = '(M*16*c1^2*(1-c1)^2)/s'
         # expression = 'if (c1>0, if(c1<1, (M)/s, 0), 0)'
         # derivative_order = 2
@@ -262,7 +262,7 @@ delta = 0.025
         constant_names = 'M     s'
         constant_expressions = '${M} ${s}'
         # expression = 'M/s'
-        expression = '(M*exp(15*(1-c1-c2)-3)/5.5)/s'
+        expression = '(M*exp((15*(1-c1-c2)-3)))/s'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -366,13 +366,13 @@ delta = 0.025
     l_tol = 1e-10
     l_abs_tol = 1e-10
     l_max_its = 200
-    nl_max_its = 100
+    nl_max_its = 30
     nl_abs_tol = 1e-10
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-7
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -380,7 +380,7 @@ delta = 0.025
 
     # dt = 1.0e-8
 
-    end_time = 1e2 # seconds
+    end_time = 1e-4 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
@@ -397,13 +397,13 @@ delta = 0.025
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3p_dis_taylor
+        file_base = output/3phase_5
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3p_dis_taylor
+        file_base = output/3phase_5
     []
 []
 
