@@ -28,6 +28,7 @@ delta = 0
     ny = ${n}
     xmax = ${d}
     ymax = ${d}
+    add_subdomain_ids = '0 1'
 []
 
 [MeshModifiers]
@@ -35,7 +36,7 @@ delta = 0
       type = CoupledVarThresholdElementSubdomainModifier
       coupled_var = c3
       criterion_type = ABOVE
-      subdomain_id = 2
+      subdomain_id = 1
       threshold = 1e-6
     []
 []
@@ -58,7 +59,7 @@ delta = 0
     # Chemical potential (nJ/mol)
     [w3]
         order = FIRST
-        family = LAGRANGE
+        family = LAGRANGE   
     []
 []
 
