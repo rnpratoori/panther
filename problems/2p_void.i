@@ -1,53 +1,66 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
 a = 0.5     # type A monomer density
-chi12 = 2.0   # Flory-Huggins parameter
-chi13 = 10.0   # Flory-Huggins parameter
-chi23 = 10.0   # Flory-Huggins parameter
-N1 = 5       # Degree of polymerisation
-N2 = 5       # Degree of polymerisation
-N3 = 100     # Penalty term for void
-M1 = 1       # Initial mobility, depends on swell ratio
-M3 = 0       # Initial mobility, depends on swell ratio
-s = 1e+0    # Scaling factor
+M = 1       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
-Cn3 = 1e-2  # Cahn number
-k3 = ${fparse Cn3^2}    # gradient energy coefficient
 
-R = 1  # Universal gas constant
-T = 1 # Temperature in Kelvin
-beta = 1e-3*R*T
-delta = 1e-4
+# Flory-Huggins approximation
+chi12 = 1.0   # Flory-Huggins parameter
+# chi13 = 10.0   # Flory-Huggins parameter
+# chi23 = 10.0   # Flory-Huggins parameter
+# N1 = 5       # Degree of polymerisation
+# N2 = 5       # Degree of polymerisation
+# N3 = 100     # Penalty term for void
+# R = 1  # Universal gas constant
+# T = 1 # Temperature in Kelvin
+p = -1.38629e-1      # 0th coefficient of taylor function
+q = 0               # 1st coefficient of taylor function
+r = 0.4            # 2nd coefficient of taylor function
+s = 0               # 3rd coefficient of taylor function
+t = 2.66667e-1      # 4th coefficient of taylor function
+u = 0               # 5th coefficient of taylor function
+v = 4.26667e-1      # 6th coefficient of taylor function
+c0 = 0.5
+beta = 1e-3
+delta = 0
+
+[GlobalParams]
+  block = 0
+[]
 
 [Mesh]
-    # generate a 2D mesh
-    type = GeneratedMesh
-    dim = 2
-    nx = ${n}
-    ny = ${n}
-    xmax = ${d}
-    ymax = ${d}
-    # uniform_refine = 2
+    # [2p]
+        # generate a 2D mesh
+        type = GeneratedMesh
+        dim = 2
+        nx = ${n}
+        ny = ${n}
+        xmax = ${d}
+        ymax = ${d}
+        add_subdomain_ids = '0  1'
+    # []
+[]
+
+[MeshModifiers]
+  [void]
+    type = CoupledVarThresholdElementSubdomainModifier
+    coupled_var = eta
+    criterion_type = ABOVE
+    subdomain_id = 1
+    threshold = 1e-6
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+  []
 []
 
 [Variables]
     # polymer volume fraction
-    [c1]
+    [c]
         order = FIRST
         family = LAGRANGE
     []
     # Chemical potential (nJ/mol)
-    [w1]
-        order = FIRST
-        family = LAGRANGE
-    []
-    [c3]
-        order = FIRST
-        family = LAGRANGE
-    []
-    # Chemical potential (nJ/mol)
-    [w3]
+    [w]
         order = FIRST
         family = LAGRANGE
     []
@@ -55,25 +68,13 @@ delta = 1e-4
 
 [ICs]
     [pvfIC_1]
-        type = RandomConstraintIC
-        variable = c1
+        type = RandomIC
+        variable = c
         min = '${fparse a-0.04}'
         max = '${fparse a+0.04}'
         seed = 123
-        # distribution = Normal_a
-        coupled = c3
-    []
-    [voidIC]
-        type = LatticeSmoothCircleIC
-        variable = c3
-        invalue = ${fparse 1.0-delta}
-        outvalue = ${delta}
-        circles_per_side = '2 2'
-        pos_variation = 0.2
-        radius = 0.1
-        int_width = 0.01
-        radius_variation_type = uniform
-        avoid_bounds = true
+        # # distribution = Normal_a
+        # coupled = eta
     []
 []
 
@@ -94,46 +95,47 @@ delta = 1e-4
         order = CONSTANT
         family = MONOMIAL
     []
+    [c2]
+        order = FIRST
+        family = LAGRANGE
+    []
+    # AC variable
+    [eta]
+        order = FIRST
+        family = LAGRANGE
+        [InitialCondition]
+          type = LatticeSmoothCircleIC
+            variable = eta
+            invalue = ${fparse 1.0-delta}
+            outvalue = ${delta}
+            circles_per_side = '2 2'
+            pos_variation = 0.2
+            radius = 0.1
+            int_width = 0.01
+            radius_variation_type = uniform
+            avoid_bounds = true
+        []
+    []
 []
 
 [Kernels]
-    [w1_dot]
+    [w_dot]
         type = CoupledTimeDerivative
-        variable = w1
-        v = c1
+        variable = w
+        v = c
     []
     # adding nonlocal term to the energy
-    [coupled_res1]
+    [coupled_res]
         type = SplitCHWRes
-        variable = w1
-        mob_name = M1
+        variable = w
+        mob_name = M
     []
-    [coupled_parsed1]
+    [coupled_parsed]
         type = SplitCHParsed
-        variable = c1
-        coupled_variables = 'c3'
-        f_name = f_mix
+        variable = c
+        f_name = f_tot
         kappa_name = kappa
-        w = w1
-    []
-    [w3_dot]
-        type = CoupledTimeDerivative
-        variable = w3
-        v = c3
-    []
-    # adding nonlocal term to the energy
-    [coupled_res3]
-        type = SplitCHWRes
-        variable = w3
-        mob_name = M3
-    []
-    [coupled_parsed3]
-        type = SplitCHParsed
-        variable = c3
-        coupled_variables = 'c1'
-        f_name = f_mix
-        kappa_name = kappa3
-        w = w3
+        w = w
     []
 []
 
@@ -143,8 +145,8 @@ delta = 1e-4
         type = TotalFreeEnergy
         variable = f_density
         f_name = 'f_tot'
-        kappa_names = 'kappa kappa3'
-        interfacial_vars = 'c1 c3'
+        kappa_names = 'kappa'
+        interfacial_vars = 'c'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -159,25 +161,16 @@ delta = 1e-4
 [Materials]
     [mat]
         type = GenericFunctionMaterial
-        prop_names = 'kappa      kappa3'
-        prop_values = '${fparse k*s}   ${fparse k3*s}'
+        prop_names = 'kappa'
+        prop_values = '${fparse k}'
     []
-    [mobility1]
+    [mobility]
         type = DerivativeParsedMaterial
-        property_name = M1
-        coupled_variables = 'c1'
-        constant_names = 'M1     s'
-        constant_expressions = '${M1} ${s}'
-        expression = '(M1*(1-c1)^2)/s'
-        # derivative_order = 2
-    []
-    [mobility3]
-        type = DerivativeParsedMaterial
-        property_name = M3
-        coupled_variables = 'c3'
-        constant_names = 'M3     s'
-        constant_expressions = '${M3} ${s}'
-        expression = '(M3*(1-c3)^2)/s'
+        property_name = M
+        coupled_variables = 'c  eta'
+        constant_names = 'M'
+        constant_expressions = '${M}'
+        expression = '(M*(1-c)^2)*(1-eta)'
         # derivative_order = 2
     []
     # mixing energy based on
@@ -185,10 +178,24 @@ delta = 1e-4
     [mixing_energy]
         type = DerivativeParsedMaterial
         property_name = f_mix
-        coupled_variables = 'c1 c3'
-        constant_names = 'R      T       chi12      chi13       chi23     N1        N2      N3       s      beta'
-        constant_expressions = '${R}    ${T}    ${chi12}    ${chi13}    ${chi23}  ${N1} ${N2}    ${N3}    ${s}    ${beta}'
-        expression = 's*(R*T*(c1*log(c1)/N1 + c3*log(c3)/N3 + (1-c1-c3)*log(1-c1-c3)/N2 + chi12*c1*(1-c1-c3) + chi13*c1*c3 + chi23*c3*(1-c1-c3)) + beta*(1/c1 + 1/c3 + 1/(1-c1-c3)))'
+        coupled_variables = 'c'
+        constant_names =        'p      q       r       s
+                                t      u        v
+                                c0     chi'
+        constant_expressions = '${p}    ${q}    ${r}    ${s}
+                                ${t}    ${u}    ${v}
+                                ${c0}   ${chi12}'
+        expression = 'p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + chi*c*(1-c)'
+        derivative_order = 2
+    []
+    # beta penalty term
+    [beta_penalty]
+        type = DerivativeParsedMaterial
+        property_name = f_beta
+        coupled_variables = 'c'
+        constant_names = 'beta'
+        constant_expressions = '${beta}'
+        expression = 'beta*(1/c + 1/(1-c))'
         derivative_order = 2
     []
     # Total free energy
@@ -196,8 +203,8 @@ delta = 1e-4
     [free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
-        coupled_variables = 'c1 c3'
-        sum_materials = 'f_mix'
+        coupled_variables = 'c'
+        sum_materials = 'f_mix  f_beta'
         derivative_order = 2
     []
 []
@@ -236,6 +243,8 @@ delta = 1e-4
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
 
+    line_search = 'basic'
+
     # petsc_options_iname = '-pc_type'
     # petsc_options_value = 'lu'
 
@@ -245,14 +254,14 @@ delta = 1e-4
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    l_max_its = 30
-    nl_max_its = 30
+    l_max_its = 200
+    nl_max_its = 100
     nl_abs_tol = 1e-10
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-3
+        dt = 1.0e-8
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -261,8 +270,8 @@ delta = 1e-4
     end_time = 1e0 # seconds
 
     # # Automatic scaling for u and w
-    # automatic_scaling = true
-    # scaling_group_variables = 'c1 w1; c2 w2'
+    automatic_scaling = true
+    scaling_group_variables = 'c w'
 
     # [Adaptivity]
     #     coarsen_fraction = 0.1
@@ -274,13 +283,13 @@ delta = 1e-4
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2p_void_t2
+        file_base = output/2p_void
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/2p_void_t2
+        file_base = output/2p_void
     []
 []
 
