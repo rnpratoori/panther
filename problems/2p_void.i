@@ -1,6 +1,6 @@
 n = 100     # number of elements per side
 d = 1       # ND size of the side
-a = 0.5     # type A monomer density
+a = 0.67     # type A monomer density
 M = 1       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
@@ -29,6 +29,10 @@ delta = 0
   block = 0
 []
 
+# [Problem]
+#     kernel_coverage_check = false
+# []
+
 [Mesh]
     # [2p]
         # generate a 2D mesh
@@ -49,7 +53,7 @@ delta = 0
     criterion_type = ABOVE
     subdomain_id = 1
     threshold = 1e-6
-    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    execute_on = 'INITIAL'
   []
 []
 
@@ -63,6 +67,25 @@ delta = 0
     [w]
         order = FIRST
         family = LAGRANGE
+    []
+    # AC variable
+    [eta]
+        order = FIRST
+        family = LAGRANGE
+        block = '0  1'
+        [InitialCondition]
+          type = LatticeSmoothCircleIC
+            variable = eta
+            invalue = ${fparse 1.0-delta}
+            outvalue = ${delta}
+            circles_per_side = '2 2'
+            pos_variation = 0.1
+            radius = 0.1
+            int_width = 0.001
+            radius_variation_type = uniform
+            avoid_bounds = true
+            block = '0  1'
+        []
     []
 []
 
@@ -99,23 +122,7 @@ delta = 0
         order = FIRST
         family = LAGRANGE
     []
-    # AC variable
-    [eta]
-        order = FIRST
-        family = LAGRANGE
-        [InitialCondition]
-          type = LatticeSmoothCircleIC
-            variable = eta
-            invalue = ${fparse 1.0-delta}
-            outvalue = ${delta}
-            circles_per_side = '2 2'
-            pos_variation = 0.2
-            radius = 0.1
-            int_width = 0.01
-            radius_variation_type = uniform
-            avoid_bounds = true
-        []
-    []
+    
 []
 
 [Kernels]
@@ -137,6 +144,11 @@ delta = 0
         kappa_name = kappa
         w = w
     []
+    [null]
+        type = NullKernel
+        variable = eta
+        block = '0  1'
+    []
 []
 
 [AuxKernels]
@@ -156,6 +168,13 @@ delta = 0
         material_properties = 'f_tot'
         expression = 'f_density - f_tot'
     []
+    # calculate c2 from c
+    [c2]
+        type = ParsedAux
+        variable = c2
+        coupled_variables = 'c'
+        expression = '1 - c'
+    []
 []
 
 [Materials]
@@ -163,6 +182,7 @@ delta = 0
         type = GenericFunctionMaterial
         prop_names = 'kappa'
         prop_values = '${fparse k}'
+        block = '0  1'
     []
     [mobility]
         type = DerivativeParsedMaterial
