@@ -16,7 +16,7 @@ class pantherTestApp : public MooseApp
 public:
   static InputParameters validParams();
 
-  pantherTestApp(InputParameters parameters);
+  pantherTestApp(const InputParameters & parameters);
   virtual ~pantherTestApp();
 
   static void registerApps();

@@ -21,7 +21,7 @@ pantherTestApp::validParams()
   return params;
 }
 
-pantherTestApp::pantherTestApp(InputParameters parameters) : MooseApp(parameters)
+pantherTestApp::pantherTestApp(const InputParameters & parameters) : MooseApp(parameters)
 {
   pantherTestApp::registerAll(
       _factory, _action_factory, _syntax, getParam<bool>("allow_test_objects"));

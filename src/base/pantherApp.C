@@ -13,7 +13,7 @@ pantherApp::validParams()
   return params;
 }
 
-pantherApp::pantherApp(InputParameters parameters) : MooseApp(parameters)
+pantherApp::pantherApp(const InputParameters & parameters) : MooseApp(parameters)
 {
   pantherApp::registerAll(_factory, _action_factory, _syntax);
 }
