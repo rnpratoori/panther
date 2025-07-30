@@ -47,14 +47,15 @@ delta = 0
 []
 
 [MeshModifiers]
-  [void]
-    type = CoupledVarThresholdElementSubdomainModifier
-    coupled_var = eta
-    criterion_type = ABOVE
-    subdomain_id = 1
-    threshold = 1e-6
-    execute_on = 'INITIAL'
-  []
+    [void]
+        type = CoupledVarThresholdElementSubdomainModifier
+        coupled_var = eta
+        criterion_type = BELOW
+        subdomain_id = 0
+        complement_subdomain_id = 1
+        threshold = 1
+        execute_on = 'INITIAL'
+    []
 []
 
 [Variables]
@@ -68,36 +69,34 @@ delta = 0
         order = FIRST
         family = LAGRANGE
     []
-    # AC variable
+    # void variable
     [eta]
         order = FIRST
         family = LAGRANGE
         block = '0  1'
-        [InitialCondition]
-          type = LatticeSmoothCircleIC
-            variable = eta
-            invalue = ${fparse 1.0-delta}
-            outvalue = ${delta}
-            circles_per_side = '2 2'
-            pos_variation = 0.1
-            radius = 0.1
-            int_width = 0.001
-            radius_variation_type = uniform
-            avoid_bounds = true
-            block = '0  1'
-        []
     []
 []
 
 [ICs]
-    [pvfIC_1]
+    [c]
         type = RandomIC
         variable = c
         min = '${fparse a-0.04}'
         max = '${fparse a+0.04}'
         seed = 123
-        # # distribution = Normal_a
-        # coupled = eta
+    []
+    [eta]
+        type = LatticeSmoothCircleIC
+        variable = eta
+        invalue = ${fparse 1.0-delta}
+        outvalue = ${delta}
+        circles_per_side = '2 2'
+        pos_variation = 0.1
+        radius = 0.08
+        int_width = 0.001
+        radius_variation_type = uniform
+        avoid_bounds = true
+        # block = '0  1'
     []
 []
 
@@ -152,13 +151,13 @@ delta = 0
 []
 
 [AuxKernels]
-    # calculate energy density from local and gradient energies (J/mol/mum^2)
+     # calculate energy density from local and gradient energies (J/mol/mum^2)
     [f_density]
         type = TotalFreeEnergy
         variable = f_density
         f_name = 'f_tot'
         kappa_names = 'kappa'
-        interfacial_vars = 'c'
+        interfacial_vars = c
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -174,6 +173,7 @@ delta = 0
         variable = c2
         coupled_variables = 'c'
         expression = '1 - c'
+        block = 0
     []
 []
 
@@ -191,7 +191,6 @@ delta = 0
         constant_names = 'M'
         constant_expressions = '${M}'
         expression = '(M*(1-c)^2)*(1-eta)'
-        # derivative_order = 2
     []
     # mixing energy based on
     # Flory-Huggins theory
