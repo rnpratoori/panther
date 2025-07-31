@@ -83,6 +83,7 @@ delta = 0.025
         ny = ${ny}
         xmax = ${dx}
         ymax = ${dy}
+        show_info = true
     []
     # Subdomain for ramp
     [c3_domain]
@@ -90,6 +91,7 @@ delta = 0.025
         block_id = 2
         combinatorial_geometry = 'y > 1'
         input = 2d
+        show_info = true
     []
 []
 
@@ -435,6 +437,9 @@ delta = 0.025
     []
 []
 
-# [Debug]
-#   show_var_residual_norms = true
-# []
+[Debug]
+  show_execution_order = true
+  show_actions = true
+  show_action_dependencies = true
+  show_block_restriction = true
+[]
