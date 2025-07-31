@@ -70,10 +70,11 @@ beta = 1.0e-3       # Stability parameter
 delta = 0.025
 
 [GlobalParams]
-  block = '0 2'
+    block = '0 2'
 []
 
 [Mesh]
+    add_subdomain_ids = '1'
     [2d]
         # generate a 2D mesh
         type = GeneratedMeshGenerator
@@ -82,7 +83,6 @@ delta = 0.025
         ny = ${ny}
         xmax = ${dx}
         ymax = ${dy}
-        add_subdomain_ids = '0  1   2'
     []
     # Subdomain for ramp
     [c3_domain]
@@ -94,14 +94,15 @@ delta = 0.025
 []
 
 [MeshModifiers]
-  [void]
-    type = CoupledVarThresholdElementSubdomainModifier
-    coupled_var = eta
-    criterion_type = ABOVE
-    subdomain_id = 1
-    threshold = 1e-6
-    execute_on = 'INITIAL'
-  []
+    [void]
+        type = CoupledVarThresholdElementSubdomainModifier
+        coupled_var = eta
+        criterion_type = BELOW
+        subdomain_id = 0
+        complement_subdomain_id = 1
+        threshold = 1
+        execute_on = 'INITIAL'
+    []
 []
 
 [Variables]
@@ -137,7 +138,7 @@ delta = 0.025
     [c1]
         type = SolutionIC
         from_variable = 'c'
-        solution_uo = 2phase
+        solution_uo = 2phase_polymer
         variable = c1
         block = 0
         from_subdomains = 0
@@ -145,40 +146,54 @@ delta = 0.025
     [c2]
         type = SolutionIC
         from_variable = 'c2'
-        solution_uo = 2phase
+        solution_uo = 2phase_polymer
         variable = c2
         block = 0
         from_subdomains = 0
+    []
+    [etaIC]
+        type = SolutionIC
+        from_variable = 'eta'
+        solution_uo = 2phase_void
+        variable = eta
+        block = '0  1'
+        from_subdomains = '0    1'
     []
     [top_c1]
         type = ConstantIC
         value = ${delta}
         variable = c1
-        block = 1
+        block = 2
     []
     [top_c2]
         type = ConstantIC
         value = ${delta}
         variable = c2
-        block = 1
+        block = 2
     []
-    [etaIC]
-        type = SolutionIC
-        from_variable = 'eta'
-        solution_uo = 2phase
+    [top_eta]
+        type = ConstantIC
+        value = ${delta}
         variable = eta
-        block = '0  1'
-        from_subdomains = '0 1'
+        block = 2
     []
 []
 
 [UserObjects]
-  [2phase]
-    type = SolutionUserObject
-    mesh = 'output/2p_void.e'
-    system_variables = 'c   c2  eta'
-    timestep = LATEST
-  []
+    [2phase_polymer]
+        type = SolutionUserObject
+        mesh = 'output/2p_void.e'
+        system_variables = 'c   c2'
+        timestep = LATEST
+        # block = '0'
+    []
+    [2phase_void]
+        type = SolutionUserObject
+        mesh = 'output/2p_void.e'
+        system_variables = 'eta'
+        timestep = LATEST
+        # block = '0  1'
+    []
 []
 
 [AuxVariables]
@@ -260,7 +275,7 @@ delta = 0.025
         type = GenericFunctionMaterial
         prop_names = 'kappa'
         prop_values = '${fparse k*s}'
-        block = '0  1'
+        block = '0  1 2'
     []
     [mobility1]
         type = DerivativeParsedMaterial
