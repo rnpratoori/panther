@@ -1,5 +1,5 @@
 nx = 100     # number of elements in x
-ny = 200     # number of elements in y
+ny = 300     # number of elements in y
 dx = 1.00       # ND size of the side in x
 dy = 2.00       # ND size of the side in y
 M = 1e-0       # Initial mobility, depends on swell ratio
@@ -438,8 +438,8 @@ delta = 0.025
 []
 
 [Debug]
-  show_execution_order = true
+  show_execution_order = ALWAYS
   show_actions = true
   show_action_dependencies = true
-  show_block_restriction = true
+  show_block_restriction = all
 []
