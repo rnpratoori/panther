@@ -29,10 +29,6 @@ delta = 0
   block = 0
 []
 
-# [Problem]
-#     kernel_coverage_check = false
-# []
-
 [Mesh]
     # [2p]
         # generate a 2D mesh
@@ -121,7 +117,15 @@ delta = 0
         order = FIRST
         family = LAGRANGE
     []
-    
+    # Variables to be read in dissolution simulation
+    [c1_total]
+        order = FIRST
+        family = LAGRANGE
+    []
+    [c2_total]
+        order = FIRST
+        family = LAGRANGE
+    []
 []
 
 [Kernels]
@@ -174,6 +178,18 @@ delta = 0
         coupled_variables = 'c'
         expression = '1 - c'
         block = 0
+    []
+    [c1_total]
+        type = ParsedAux
+        variable = c1_total
+        coupled_variables = 'c  eta'
+        expression = 'if(eta<1, c, 0)'
+    []
+    [c2_total]
+        type = ParsedAux
+        variable = c2_total
+        coupled_variables = 'c  eta'
+        expression = 'if(eta<1, 1 - c - eta, 1 - c)'
     []
 []
 
