@@ -1,7 +1,7 @@
 nx = 100     # number of elements in x
 ny = 300     # number of elements in y
 dx = 1.00       # ND size of the side in x
-dy = 2.00       # ND size of the side in y
+dy = 3.00       # ND size of the side in y
 M = 1e-0       # Initial mobility, depends on swell ratio
 s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
@@ -67,11 +67,8 @@ A66 = 14336.0
 c1_0 = 0.25
 c2_0 = 0.25
 beta = 1.0e-3       # Stability parameter
-delta = 0.025
-
-[GlobalParams]
-    block = '0 2'
-[]
+delta_c = 0.025
+delta_eta = 0
 
 [Mesh]
     add_subdomain_ids = '1'
@@ -83,7 +80,7 @@ delta = 0.025
         ny = ${ny}
         xmax = ${dx}
         ymax = ${dy}
-        show_info = true
+        # show_info = true
     []
     # Subdomain for ramp
     [c3_domain]
@@ -91,7 +88,7 @@ delta = 0.025
         block_id = 2
         combinatorial_geometry = 'y > 1'
         input = 2d
-        show_info = true
+        # show_info = true
     []
 []
 
@@ -99,11 +96,13 @@ delta = 0.025
     [void]
         type = CoupledVarThresholdElementSubdomainModifier
         coupled_var = eta
-        criterion_type = BELOW
-        subdomain_id = 0
-        complement_subdomain_id = 1
-        threshold = 1
+        criterion_type = ABOVE
+        subdomain_id = 1
+        # complement_subdomain_id = 1
+        threshold = 0.999
         execute_on = 'INITIAL'
+        force_preic = false
+        allow_duplicate_execution_on_initial = true
     []
 []
 
@@ -132,69 +131,60 @@ delta = 0.025
     [eta]
         order = FIRST
         family = LAGRANGE
-        block = '0  1   2'
     []
 []
 
 [ICs]
     [c1]
         type = SolutionIC
-        from_variable = 'c'
-        solution_uo = 2phase_polymer
+        from_variable = 'c1_total'
+        solution_uo = 2phase
         variable = c1
-        block = 0
-        from_subdomains = 0
+        from_subdomains = '0 1'
+        block = '0'
     []
     [c2]
         type = SolutionIC
-        from_variable = 'c2'
-        solution_uo = 2phase_polymer
+        from_variable = 'c2_total'
+        solution_uo = 2phase
         variable = c2
-        block = 0
-        from_subdomains = 0
+        from_subdomains = '0 1'
+        block = '0'
     []
-    [etaIC]
+    [eta]
         type = SolutionIC
         from_variable = 'eta'
-        solution_uo = 2phase_void
+        solution_uo = 2phase
         variable = eta
-        block = '0  1'
-        from_subdomains = '0    1'
+        from_subdomains = '0 1'
+        block = '0'
     []
     [top_c1]
         type = ConstantIC
-        value = ${delta}
+        value = ${delta_c}
         variable = c1
         block = 2
     []
     [top_c2]
         type = ConstantIC
-        value = ${delta}
+        value = ${delta_c}
         variable = c2
         block = 2
     []
     [top_eta]
         type = ConstantIC
-        value = ${delta}
+        value = ${delta_eta}
         variable = eta
         block = 2
     []
 []
 
 [UserObjects]
-    [2phase_polymer]
+    [2phase]
         type = SolutionUserObject
         mesh = 'output/2p_void.e'
-        system_variables = 'c   c2'
+        system_variables = 'c1_total c2_total eta'
         timestep = LATEST
-        # block = '0'
-    []
-    [2phase_void]
-        type = SolutionUserObject
-        mesh = 'output/2p_void.e'
-        system_variables = 'eta'
-        timestep = LATEST
-        # block = '0  1'
     []
 []
 
@@ -202,10 +192,12 @@ delta = 0.025
     [f_density]
         order = CONSTANT
         family = MONOMIAL
+        block = '0  2'
     []
     [f_int_density]
         order = CONSTANT
         family = MONOMIAL
+        block = '0  2'
     []
 []
 
@@ -214,42 +206,47 @@ delta = 0.025
         type = CoupledTimeDerivative
         variable = w1
         v = c1
+        block = '0 2'
     []
     [coupled_res1]
         type = SplitCHWRes
         variable = w1
         mob_name = M1
+        block = '0 2'
     []
     [coupled_parsed1]
         type = SplitCHParsed
         variable = c1
         coupled_variables = 'c2'
-        f_name = f_mix
+        f_name = f_tot
         kappa_name = kappa
         w = w1
+        block = '0 2'
     []
     [w2_dot]
         type = CoupledTimeDerivative
         variable = w2
         v = c2
+        block = '0 2'
     []
     [coupled_res2]
         type = SplitCHWRes
         variable = w2
         mob_name = M2
+        block = '0 2'
     []
     [coupled_parsed2]
         type = SplitCHParsed
         variable = c2
         coupled_variables = 'c1'
-        f_name = f_mix
+        f_name = f_tot
         kappa_name = kappa
         w = w2
+        block = '0 2'
     []
     [null]
         type = NullKernel
         variable = eta
-        block = '0  1 2'
     []
 []
 
@@ -261,6 +258,7 @@ delta = 0.025
         f_name = 'f_tot'
         kappa_names = 'kappa kappa'
         interfacial_vars = 'c1 c2'
+        block = '0  2'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -269,6 +267,7 @@ delta = 0.025
         coupled_variables = 'f_density'
         material_properties = 'f_tot'
         expression = 'f_density - f_tot'
+        block = '0  2'
     []
 []
 
@@ -277,7 +276,6 @@ delta = 0.025
         type = GenericFunctionMaterial
         prop_names = 'kappa'
         prop_values = '${fparse k*s}'
-        block = '0  1 2'
     []
     [mobility1]
         type = DerivativeParsedMaterial
@@ -286,6 +284,7 @@ delta = 0.025
         constant_names = 'M'
         constant_expressions = '${M}'
         expression = '(M*exp((15*(1-c1-c2)-3)))*(1-eta)'
+        block = '0  2'
     []
     [mobility2]
         type = DerivativeParsedMaterial
@@ -294,6 +293,7 @@ delta = 0.025
         constant_names = 'M'
         constant_expressions = '${M}'
         expression = '(M*exp((15*(1-c1-c2)-3)))*(1-eta)'
+        block = '0  2'
     []
     # mixing energy based on
     # Flory-Huggins theory
@@ -326,7 +326,8 @@ delta = 0.025
                     A60*(c1-c1_0)^6 + A51*(c1-c1_0)^5*(c2-c2_0) + A42*(c1-c1_0)^4*(c2-c2_0)^2 + A33*(c1-c1_0)^3*(c2-c2_0)^3 + A24*(c1-c1_0)^2*(c2-c2_0)^4 + A15*(c1-c1_0)*(c2-c2_0)^5 + A06*(c2-c2_0)^6 +
                     chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)'
         #      
-        derivative_order = 2                 
+        derivative_order = 2
+        block = '0  2'               
     []
     # beta penalty term
     [beta_penalty]
@@ -337,6 +338,7 @@ delta = 0.025
         constant_expressions = '${beta}'
         expression = 'beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2))'
         derivative_order = 2
+        block = '0  2'
     []
     # Total free energy
     # Sum of all the parts
@@ -344,8 +346,9 @@ delta = 0.025
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c1 c2'
-        sum_materials = 'f_mix  f_beta'
+        sum_materials = 'f_mix'
         derivative_order = 2
+        block = '0  2'
     []
 []
 
@@ -362,11 +365,13 @@ delta = 0.025
         type = ElementIntegralVariablePostprocessor
         variable = f_density
         execute_on = 'initial timestep_end'
+        block = '0  2'
     []
     [interfacial_energy]
         type = ElementIntegralVariablePostprocessor
         variable = f_int_density
         execute_on = 'initial timestep_end'
+        block = '0  2'
     []
     [./elapsed]
         type = PerfGraphData
@@ -427,19 +432,19 @@ delta = 0.025
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/3phase_5
+        file_base = output/3p_dis_void
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = output/3phase_5
+        file_base = output/3p_dis_void
     []
 []
 
-[Debug]
-  show_execution_order = ALWAYS
-  show_actions = true
-  show_action_dependencies = true
-  show_block_restriction = all
-[]
+# [Debug]
+#   show_execution_order = ALWAYS
+#   show_actions = true
+#   show_action_dependencies = true
+#   show_block_restriction = all
+# []
