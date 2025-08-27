@@ -333,3 +333,4 @@ panther.yaml
 # Additional files or directories
 /problems/output_dump
 *Zone.Identifier*
+/dump/*
