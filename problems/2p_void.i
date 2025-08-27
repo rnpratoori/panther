@@ -46,11 +46,11 @@ delta = 0
     [void]
         type = CoupledVarThresholdElementSubdomainModifier
         coupled_var = eta
-        criterion_type = BELOW
-        subdomain_id = 0
-        complement_subdomain_id = 1
-        threshold = 1
-        execute_on = 'INITIAL'
+        criterion_type = ABOVE
+        subdomain_id = 1
+        complement_subdomain_id = 0
+        threshold = 0
+        execute_on = 'INITIAL TIMESTEP_BEGIN'
     []
 []
 
@@ -85,11 +85,11 @@ delta = 0
         type = LatticeSmoothCircleIC
         variable = eta
         invalue = ${fparse 1.0-delta}
-        outvalue = ${delta}
+        outvalue = ${fparse -1.0+delta}
         circles_per_side = '2 2'
-        pos_variation = 0.1
-        radius = 0.08
-        int_width = 0.001
+        pos_variation = 0.2
+        radius = 0.1
+        int_width = 0.05
         radius_variation_type = uniform
         avoid_bounds = true
         # block = '0  1'
@@ -183,13 +183,13 @@ delta = 0
         type = ParsedAux
         variable = c1_total
         coupled_variables = 'c  eta'
-        expression = 'if(eta<1, c, 0)'
+        expression = 'if(eta<0.999, c, 0)'
     []
     [c2_total]
         type = ParsedAux
         variable = c2_total
         coupled_variables = 'c  eta'
-        expression = 'if(eta<1, 1 - c - eta, 1 - c)'
+        expression = 'if(eta<0.999, 1 - c, 0)'
     []
 []
 
@@ -206,7 +206,7 @@ delta = 0
         coupled_variables = 'c  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = '(M*(1-c)^2)*(1-eta)'
+        expression = '(M*(1-c)^2)*(1-eta)/2'
     []
     # mixing energy based on
     # Flory-Huggins theory
@@ -274,6 +274,8 @@ delta = 0
     type = Transient
     solve_type = 'NEWTON'
     scheme = bdf2
+
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
 
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
