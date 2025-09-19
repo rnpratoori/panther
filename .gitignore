@@ -14,7 +14,6 @@
 *-prof
 *-profiling
 *-devel
-*.e
 *.nav
 *.log
 *.aux
@@ -334,3 +333,4 @@ panther.yaml
 /problems/output_dump
 *Zone.Identifier*
 /dump/*
+/problems/*.e
