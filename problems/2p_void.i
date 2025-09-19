@@ -312,7 +312,7 @@ delta = 0
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2pv_${a}_ic_${rc}_${dc}
+        file_base = ic_2pv/2pv_${a}_ic_${rc}_${dc}
         time_step_interval = 10
         execute_on = 'TIMESTEP_END FINAL'
     []
