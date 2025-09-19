@@ -1,6 +1,11 @@
-n = 100     # number of elements per side
-d = 1       # ND size of the side
-a = 0.67     # type A monomer density
+rc = 0.10
+dc = 0.4
+
+nx = 400     # number of elements per side
+ny = 200     # number of elements per side
+dx = 2       # ND size of the side
+dy = 1       # ND size of the side
+a = 0.3     # type A monomer density
 M = 1       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
@@ -34,10 +39,10 @@ delta = 0
         # generate a 2D mesh
         type = GeneratedMesh
         dim = 2
-        nx = ${n}
-        ny = ${n}
-        xmax = ${d}
-        ymax = ${d}
+        nx = ${nx}
+        ny = ${ny}
+        xmax = ${dx}
+        ymax = ${dy}
         add_subdomain_ids = '0  1'
     # []
 []
@@ -77,22 +82,23 @@ delta = 0
     [c]
         type = RandomIC
         variable = c
-        min = '${fparse a-0.04}'
-        max = '${fparse a+0.04}'
         seed = 123
+        distribution = Normal_a
     []
     [eta]
-        type = LatticeSmoothCircleIC
+        type = SpecifiedSmoothCircleIC
+        radii =         '0.10 0.10 0.10 0.10 0.10
+                        0.10 0.10 0.10 0.10 0.10'
+        x_positions =   '0.2 0.6 1.0 1.4 1.8
+                        0.2 0.6 1.0 1.4 1.8'
+        y_positions =   '0.80 0.80 0.80 0.80 0.80
+                        0.40 0.40 0.40 0.40 0.40'
+        z_positions =   '0.00 0.00 0.00 0.00 0.00
+                        0.00 0.00 0.00 0.00 0.00'
         variable = eta
         invalue = ${fparse 1.0-delta}
         outvalue = ${fparse -1.0+delta}
-        circles_per_side = '2 2'
-        pos_variation = 0.2
-        radius = 0.1
-        int_width = 0.05
-        radius_variation_type = uniform
-        avoid_bounds = true
-        # block = '0  1'
+        int_width = 0.01
     []
 []
 
@@ -100,7 +106,7 @@ delta = 0
     [Normal_a]
         type = Normal
         mean = ${a}
-        standard_deviation = 0.02
+        standard_deviation = 0.04
     []
 []
 
@@ -206,7 +212,7 @@ delta = 0
         coupled_variables = 'c  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = '(M*(1-c)^2)*(1-eta)/2'
+        expression = '(M*16*c^2*(1-c)^2)*(1-eta)/2'
     []
     # mixing energy based on
     # Flory-Huggins theory
@@ -275,24 +281,16 @@ delta = 0
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew -ksp_monitor_cancel'
 
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
 
     line_search = 'basic'
 
-    # petsc_options_iname = '-pc_type'
-    # petsc_options_value = 'lu'
-
-    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    # petsc_options_iname = '-pc_type -pc_hypre_type'
-    # petsc_options_value = 'hypre    boomeramg'
-
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    l_max_its = 200
-    nl_max_its = 100
+    nl_max_its = 30
     nl_abs_tol = 1e-10
 
     [TimeStepper]
@@ -306,30 +304,16 @@ delta = 0
 
     end_time = 1e0 # seconds
 
-    # # Automatic scaling for u and w
+    # Automatic scaling for u and w
     automatic_scaling = true
     scaling_group_variables = 'c w'
-
-    # [Adaptivity]
-    #     coarsen_fraction = 0.1
-    #     refine_fraction = 0.7
-    #     max_h_level = 2
-    # []
 []
 
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2p_void
-        time_step_interval = 1
-        execute_on = 'TIMESTEP_END INITIAL FINAL'
-    []
-    [csv]
-        type = CSV
-        file_base = output/2p_void
+        file_base = output/2pv_${a}_ic_${rc}_${dc}
+        time_step_interval = 10
+        execute_on = 'TIMESTEP_END FINAL'
     []
 []
-
-# [Debug]
-#     show_var_residual_norms = true
-# []

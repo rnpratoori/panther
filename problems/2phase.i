@@ -1,8 +1,10 @@
-n = 100     # number of elements per side
-d = 1       # ND size of the side
-a = 0.67    # type A monomer density
+nx = 400     # number of elements per side
+ny = 200     # number of elements per side
+dx = 2       # ND size of the side
+dy = 1       # ND size of the side
+a = 0.5    # type A monomer density
 M = 1e0     # Initial mobility, depends on swell ratio
-S = 1e+0    # Scaling factor
+# S = 1e+0    # Scaling factor
 Cn = 5e-2   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
@@ -28,10 +30,10 @@ beta = 1.0e-3       # Stability parameter
         # generate a 2D mesh
         type = GeneratedMeshGenerator
         dim = 2
-        nx = ${n}
-        ny = ${n}
-        xmax = ${d}
-        ymax = ${d}
+        nx = ${nx}
+        ny = ${ny}
+        xmax = ${dx}
+        ymax = ${dy}
         # uniform_refine = 2
     []
 []
@@ -54,8 +56,15 @@ beta = 1.0e-3       # Stability parameter
         type = RandomIC
         variable = c
         seed = 123
-        min = '${fparse a-0.04}'
-        max = '${fparse a+0.04}'
+        distribution = Normal_a
+    []
+[]
+
+[Distributions]
+    [Normal_a]
+        type = Normal
+        mean = ${a}
+        standard_deviation = 0.04
     []
 []
 
@@ -125,15 +134,15 @@ beta = 1.0e-3       # Stability parameter
     [mat]
         type = GenericFunctionMaterial
         prop_names = 'kappa'
-        prop_values = '${fparse k*S}'
+        prop_values = '${fparse k}'
     []
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M
         coupled_variables = 'c'
-        constant_names = 'M     S'
-        constant_expressions = '${M} ${S}'
-        expression = '(M*16*c^2*(1-c)^2)/S'
+        constant_names = 'M'
+        constant_expressions = '${M}'
+        expression = '(M*16*c^2*(1-c)^2)'
         # expression = '(M)/S'
         # derivative_order = 2
     []
@@ -144,12 +153,12 @@ beta = 1.0e-3       # Stability parameter
         property_name = f_mix
         coupled_variables = 'c'
         constant_names =        'p      q       r       s
-                                t      u        v       S
+                                t      u        v
                                 c0     chi'
         constant_expressions = '${p}    ${q}    ${r}    ${s}
-                                ${t}    ${u}    ${v}    ${S}
+                                ${t}    ${u}    ${v}
                                 ${c0}   ${chi}'
-        expression = 's*(p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6) + chi*c*(1-c)'
+        expression = 'p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + chi*c*(1-c)'
         derivative_order = 2
     []
     # beta penalty term
@@ -204,8 +213,15 @@ beta = 1.0e-3       # Stability parameter
     solve_type = 'NEWTON'
     scheme = bdf2
 
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew -ksp_monitor_cancel'
+
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
+
+    # petsc_options_iname = '-pc_type -ksp_type -pc_factor_mat_solver_type'
+    # petsc_options_value = 'lu       preonly   mumps'
+
+    line_search = 'basic'
 
     # petsc_options_iname = '-pc_type'
     # petsc_options_value = 'lu'
@@ -216,14 +232,15 @@ beta = 1.0e-3       # Stability parameter
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    l_max_its = 200
-    nl_max_its = 100
+    nl_max_its = 30
     nl_abs_tol = 1e-10
+
+    dtmax = 1e-3
 
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-4
+        dt = 1.0e-9
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -245,12 +262,8 @@ beta = 1.0e-3       # Stability parameter
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/2phase_taylor
-        time_step_interval = 1
+        file_base = output/2phase_${a}
+        time_step_interval = 100
         execute_on = 'TIMESTEP_END INITIAL FINAL'
-    []
-    [csv]
-        type = CSV
-        file_base = output/2phase_taylor
     []
 []
