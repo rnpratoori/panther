@@ -1,18 +1,15 @@
-icfile = 3pv_0.3_ic_0.05_0.2.e
-outfile = 3pv_0.3_0.05_0.2/3pv_0.3_0.05_0.2
-
-nx = 50     # number of elements in x
+nx = 25     # number of elements in x
 ny = 75     # number of elements in y
-dx = 2.00       # ND size of the side in x
+dx = 1.00       # ND size of the side in x
 dy = 3.00       # ND size of the side in y
 M = 1e0       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
-Cn_eta = 1e-2  # Cahn number for AC variable
+Cn_eta = 5e-2  # Cahn number for AC variable
 k_eta = ${fparse Cn_eta^2}    # gradient energy coefficient for AC
 
 chi12 = 1.0   # Flory-Huggins parameter
-chi13 = 0.004   # Flory-Huggins parameter
+chi13 = 0.1   # Flory-Huggins parameter
 chi23 = 0.1   # Flory-Huggins parameter
 # N1 = 5       # Degree of polymerisation
 # N2 = 5       # Degree of polymerisation
@@ -74,12 +71,11 @@ beta = 1.0e-3       # Stability parameter
 # delta_c = 0.025
 # delta_eta = 0
 
-W = 100
+W = 1
 A = 5
 
 [Mesh]
-    add_subdomain_ids = '1'
-    uniform_refine = 3
+    # add_subdomain_ids = '1'
     [2d]
         # generate a 2D mesh
         type = GeneratedMeshGenerator
@@ -89,12 +85,6 @@ A = 5
         xmax = ${dx}
         ymax = ${dy}
         # show_info = true
-    []
-    [c3_subdomain]
-        type = ParsedSubdomainMeshGenerator
-        block_id = 1
-        combinatorial_geometry = 'y > 1'
-        input = 2d
     []
 []
 
@@ -179,7 +169,13 @@ A = 5
 [UserObjects]
     [2phase]
         type = SolutionUserObject
-        mesh = 'output/ic/${icfile}'
+        mesh = 'output/3p_dis_void_ic.e'
+        system_variables = 'c1 c2 eta'
+        timestep = LATEST
+    []
+    [baseline]
+        type = SolutionUserObject
+        mesh = 'output/3p_dis_void_ch_v_100.e'
         system_variables = 'c1 c2 eta'
         timestep = LATEST
     []
@@ -203,6 +199,26 @@ A = 5
     [voids]
         order = CONSTANT
         family = MONOMIAL
+    []
+    [c1_baseline]
+        order = FIRST
+        family = LAGRANGE
+        [InitialCondition]
+          type = SolutionIC
+          from_variable = c1
+          solution_uo = baseline
+          variable = c1_baseline
+        []
+    []
+    [c2_baseline]
+        order = FIRST
+        family = LAGRANGE
+        [InitialCondition]
+          type = SolutionIC
+          from_variable = c2
+          solution_uo = baseline
+          variable = c2_baseline
+        []
     []
 []
 
@@ -321,7 +337,6 @@ A = 5
         prop_names = 'kappa kappa_eta'
         prop_values = '${fparse k} ${fparse k_eta}'
     []
-    # mobility for void filling
     [mobility_eta]
         type = DerivativeParsedMaterial
         property_name = Meta
@@ -329,30 +344,32 @@ A = 5
         constant_names = 'M'
         constant_expressions = '${M}'
         expression = 'if(c3>0.1, M*1e5*(c3-0.1), 0)'
+        # block = 0
     []
-    # mobility for polymers
     [mobility1]
         type = DerivativeParsedMaterial
         property_name = M1
-        coupled_variables = 'c1 c2 c3 eta'
+        coupled_variables = 'c1 c2  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = 'if(eta<0, (M*exp((15*c3-3)))*(1-eta)/2, 0)'
+        expression = 'if(eta<0, (M*exp((15*(1-c1-c2)-3)))*(1-eta)/2, 1e-5)'
+        # block = 0
     []
     [mobility2]
         type = DerivativeParsedMaterial
         property_name = M2
-        coupled_variables = 'c1 c2 c3 eta'
+        coupled_variables = 'c1 c2  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = 'if(eta<0, (M/25*exp((15*c3-3)))*(1-eta)/2, 0)'
+        expression = 'if(eta<0, (M*exp((15*(1-c1-c2)-3)))*(1-eta)/2, 1e-5)'
+        # block = 0
     []
     # mixing energy based on
     # Flory-Huggins theory
     [mixing_energy]
         type = DerivativeParsedMaterial
         property_name = 'f_mix'           
-        coupled_variables = 'c1 c2 c3'
+        coupled_variables = 'c1 c2'
         constant_names =      'A00    A10    A20    A30    A40    A50    A60
                                 A01    A11    A21    A31    A41    A51    A61
                                 A02    A12    A22    A32    A42    A52    A62
@@ -376,38 +393,28 @@ A = 5
                     A40*(c1-c1_0)^4 + A31*(c1-c1_0)^3*(c2-c2_0) + A22*(c1-c1_0)^2*(c2-c2_0)^2 + A13*(c1-c1_0)*(c2-c2_0)^3 + A04*(c2-c2_0)^4 +
                     A50*(c1-c1_0)^5 + A41*(c1-c1_0)^4*(c2-c2_0) + A32*(c1-c1_0)^3*(c2-c2_0)^2 + A23*(c1-c1_0)^2*(c2-c2_0)^3 + A14*(c1-c1_0)*(c2-c2_0)^4 + A05*(c2-c2_0)^5 +
                     A60*(c1-c1_0)^6 + A51*(c1-c1_0)^5*(c2-c2_0) + A42*(c1-c1_0)^4*(c2-c2_0)^2 + A33*(c1-c1_0)^3*(c2-c2_0)^3 + A24*(c1-c1_0)^2*(c2-c2_0)^4 + A15*(c1-c1_0)*(c2-c2_0)^5 + A06*(c2-c2_0)^6 +
-                    chi12*c1*c2 + chi13*c1*c3 + chi23*c2*c3'
+                    chi12*c1*c2 + chi13*c1*(1-c1-c2) + chi23*c2*(1-c1-c2)'
         #      
         derivative_order = 2
         # block = 0
     []
     # beta penalty term
-    [beta_penalty0]
+    [beta_penalty]
         type = DerivativeParsedMaterial
-        property_name = f_beta0
-        coupled_variables = 'c1 c2 c3 eta'
+        property_name = f_beta
+        coupled_variables = 'c1 c2'
         constant_names = 'beta'
         constant_expressions = '${beta}'
-        expression = 'if(eta<0, if(c3>1e-3, beta*(1/c1 + 1/c2 + 1/c3), beta*(1/c1 + 1/c2)), 0)'
+        expression = 'if(c1>1e-8, if(c2>1e-8, if(1-c1-c2>1e-8, beta*(1/c1 + 1/c2 + 1/(1 - c1 - c2)), beta*(1/c1 + 1/c2)), if(1-c1-c2>1e-8, beta*(1/c1 + 1/(1 - c1 - c2)), 1e8)), if(c2>1e-8, if(1-c1-c2>1e-8, beta*(1/c2 + 1/(1 - c1 - c2)), beta*(1/c2)), if(1-c1-c2>1e-8, beta*(1/(1 - c1 - c2)), 1e8)))'
         derivative_order = 2
         # block = 0
     []
-    # [beta_penalty1]
-    #     type = DerivativeParsedMaterial
-    #     property_name = f_beta1
-    #     coupled_variables = 'c1 c2 c3 eta'
-    #     constant_names = 'beta'
-    #     constant_expressions = '${beta}'
-    #     expression = 'if beta*(1/c1 + 1/c2 + 1/c3)'
-    #     derivative_order = 2
-    #     # block = 1
-    # []
     # Total free energy
     # Sum of all the parts
     [free_energy]
         type = DerivativeSumMaterial
         property_name = f_tot
-        coupled_variables = 'c1 c2 c3'
+        coupled_variables = 'c1 c2'
         sum_materials = 'f_mix'
         derivative_order = 2
         # block = 0
@@ -419,7 +426,7 @@ A = 5
         coupled_variables = 'c3 eta'
         constant_names = 'W A'
         constant_expressions = '${W} ${A}'
-        expression = '(1-c3)^2*(1+eta)^4'
+        expression = 'c3*(1+eta)^4'
         # block = 1
     []
 []
@@ -450,16 +457,15 @@ A = 5
         section_name = "Root"
         data_type = total
     []
-    [step_size]             # Size of the time step
-        type = TimestepSize
-    []
-    [nodes]                 # Number of nodes in mesh
-        type = NumNodes
-    []
     [voids]
         type = FeatureFloodCount
         variable = eta
         threshold = 0
+    []
+    [l2_diff_c1]
+        type = ElementL2Difference
+        variable = c1
+        other_variable = c1_baseline
     []
 []
 
@@ -468,32 +474,37 @@ A = 5
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew -ksp_monitor_cancel'
+    # petsc_options = '-pc_svd_monitor -ksp_view'
+    # petsc_options = '-ksp_converged_reason -snes_converged_reason'
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
 
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
 
     line_search = 'basic'
 
+    # petsc_options = '-pc_svd_monitor -ksp_view'
+    # petsc_options_iname = '-pc_type'
+    # petsc_options_value = 'svd'
+
     l_tol = 1e-10
     l_abs_tol = 1e-10
-    nl_max_its = 30
+    l_max_its = 200
+    nl_max_its = 50
     nl_abs_tol = 1e-10
 
-    dtmax = 1e-7
-
-    [TimeStepper]
-        # Turn on time stepping
-        type = IterationAdaptiveDT
-        dt = 1.0e-9
-        cutback_factor = 0.8
-        growth_factor = 1.5
-        optimal_iterations = 10
-    []
+    # [TimeStepper]
+    #     # Turn on time stepping
+    #     type = IterationAdaptiveDT
+        dt = 1.0e-11
+    #     cutback_factor = 0.8
+    #     growth_factor = 1.5
+    #     optimal_iterations = 10
+    # []
 
     # dt = 1.0e-8
 
-    end_time = 1e-3 # seconds
+    end_time = 1e-9 # seconds
 
     # Automatic scaling for u and w
     automatic_scaling = true
@@ -503,77 +514,26 @@ A = 5
     # [Adaptivity]
     #     coarsen_fraction = 0.1
     #     refine_fraction = 0.7
-    #     max_h_level = 3
+    #     max_h_level = 2
     # []
-
-[]
-
-[Adaptivity]
-    marker = combined_marker
-    max_h_level = 3
-    [Indicators]
-        [indicator_c1]
-            type = GradientJumpIndicator
-            variable = c1
-        []
-        [indicator_c2]
-            type = GradientJumpIndicator
-            variable = c2
-        []
-        [indicator_eta]
-            type = GradientJumpIndicator
-            variable = eta
-        []
-    []
-    [Markers]
-        [marker_c1]
-            type = ErrorFractionMarker
-            indicator = indicator_c1
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [marker_c2]
-            type = ErrorFractionMarker
-            indicator = indicator_c2
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [marker_eta]
-            type = ErrorFractionMarker
-            indicator = indicator_eta
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [combined_marker]
-            type = ComboMarker
-            markers = 'marker_c1 marker_c2 marker_eta'
-        []
-    []
-[]
-
-[Times]
-    [out_times]
-        type = CSVFileTimes
-        files = out_times.csv
-    []
 []
 
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/${outfile}
+        file_base = output/3p_dis_void_ch_v_25
         time_step_interval = 1
         execute_on = 'INITIAL FINAL TIMESTEP_END'
     []
     [csv]
         type = CSV
-        file_base = output/${outfile}
+        file_base = output/3p_dis_void_ch_v_25
     []
-    [ex_mexh]
-        type = Exodus
-        file_base = output/mechic/3pv_0.3_0.05_0.2_mech_ic
-        execute_on = 'TIMESTEP_END'
-        sync_only = true
-        sync_times_object = out_times
-    []
+    # dofmap = true
+[]
+
+[Debug]
+#   show_execution_order = ALWAYS
+#   show_actions = true
+#   show_action_dependencies = true
 []
