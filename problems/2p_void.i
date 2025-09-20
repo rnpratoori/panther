@@ -1,11 +1,11 @@
 rc = 0.10
-dc = 0.4
+dc = 0.2
 
 nx = 400     # number of elements per side
 ny = 200     # number of elements per side
 dx = 2       # ND size of the side
 dy = 1       # ND size of the side
-a = 0.3     # type A monomer density
+a = 0.4     # type A monomer density
 M = 1       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
@@ -35,16 +35,16 @@ delta = 0
 []
 
 [Mesh]
-    # [2p]
+    add_subdomain_ids = '1'
+    [2p]
         # generate a 2D mesh
-        type = GeneratedMesh
+        type = DistributedRectilinearMeshGenerator
         dim = 2
         nx = ${nx}
         ny = ${ny}
         xmax = ${dx}
         ymax = ${dy}
-        add_subdomain_ids = '0  1'
-    # []
+    []
 []
 
 [MeshModifiers]
@@ -184,6 +184,7 @@ delta = 0
         coupled_variables = 'c'
         expression = '1 - c'
         block = 0
+        execute_on = 'INITIAL'
     []
     [c1_total]
         type = ParsedAux
@@ -296,7 +297,7 @@ delta = 0
     [TimeStepper]
         # Turn on time stepping
         type = IterationAdaptiveDT
-        dt = 1.0e-8
+        dt = 1.0e-4
         cutback_factor = 0.8
         growth_factor = 1.5
         optimal_iterations = 10
@@ -314,6 +315,6 @@ delta = 0
         type = Exodus
         file_base = ic_2pv/2pv_${a}_ic_${rc}_${dc}
         time_step_interval = 10
-        execute_on = 'TIMESTEP_END FINAL'
+        execute_on = 'INITIAL FINAL'
     []
 []
