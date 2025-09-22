@@ -1,5 +1,5 @@
-rc = 0.10
-dc = 0.2
+rc = 0.15
+dc = 0.4
 
 nx = 400     # number of elements per side
 ny = 200     # number of elements per side
@@ -87,14 +87,10 @@ delta = 0
     []
     [eta]
         type = SpecifiedSmoothCircleIC
-        radii =         '0.10 0.10 0.10 0.10 0.10
-                        0.10 0.10 0.10 0.10 0.10'
-        x_positions =   '0.2 0.6 1.0 1.4 1.8
-                        0.2 0.6 1.0 1.4 1.8'
-        y_positions =   '0.80 0.80 0.80 0.80 0.80
-                        0.40 0.40 0.40 0.40 0.40'
-        z_positions =   '0.00 0.00 0.00 0.00 0.00
-                        0.00 0.00 0.00 0.00 0.00'
+        radii =         '0.15 0.15 0.15'
+        x_positions =   '0.25 0.95 1.65'
+        y_positions =   '0.75 0.75 0.75'
+        z_positions =   '0.00 0.00 0.00'
         variable = eta
         invalue = ${fparse 1.0-delta}
         outvalue = ${fparse -1.0+delta}
