@@ -78,11 +78,11 @@ W = 100
 A = 5
 
 [Mesh]
-    add_subdomain_ids = '1'
+    add_subdomain_ids = '1 2'
     uniform_refine = 3
     [2d]
         # generate a 2D mesh
-        type = GeneratedMeshGenerator
+        type = DistributedRectilinearMeshGenerator
         dim = 2
         nx = ${nx}
         ny = ${ny}
@@ -92,25 +92,25 @@ A = 5
     []
     [c3_subdomain]
         type = ParsedSubdomainMeshGenerator
-        block_id = 1
+        block_id = 2
         combinatorial_geometry = 'y > 1'
         input = 2d
     []
 []
 
-# [MeshModifiers]
-#     [void]
-#         type = CoupledVarThresholdElementSubdomainModifier
-#         coupled_var = eta
-#         criterion_type = ABOVE
-#         subdomain_id = 1
-#         complement_subdomain_id = 0
-#         threshold = 0
-#         execute_on = 'INITIAL TIMESTEP_BEGIN'
-#         force_preic = false
-#         allow_duplicate_execution_on_initial = true
-#     []
-# []
+[MeshModifiers]
+    [void]
+        type = CoupledVarThresholdElementSubdomainModifier
+        coupled_var = eta
+        criterion_type = ABOVE
+        subdomain_id = 2
+        complement_subdomain_id = 0
+        threshold = 0
+        execute_on = 'INITIAL TIMESTEP_BEGIN'
+        force_preic = false
+        allow_duplicate_execution_on_initial = true
+    []
+[]
 
 [Variables]
     # polymer volume fraction
@@ -295,10 +295,26 @@ A = 5
         type = ParsedAux
         variable = c3
         coupled_variables = 'c1 c2 eta'
-        expression = 'if(eta<0, 1 - c1 - c2, 1 - c1 - c2 - (1+eta)/2)'
+        expression = 'if(eta>0, 1 - c1 - c2 - (1+eta)/2, 1 - c1 - c2)'
         execute_on = 'INITIAL TIMESTEP_END'
         # block = 0
     []
+    # [c3_polymer]
+    #     type = ParsedAux
+    #     variable = c3
+    #     coupled_variables = 'c1 c2 eta'
+    #     expression = '1 - c1 - c2'
+    #     execute_on = 'INITIAL TIMESTEP_END'
+    #     block = 0
+    # []
+    # [c3_void]
+    #     type = ParsedAux
+    #     variable = c3
+    #     coupled_variables = 'c1 c2 eta'
+    #     expression = '1 - c1 - c2 - (1+eta)/2'
+    #     execute_on = 'INITIAL TIMESTEP_END'
+    #     block = 2
+    # []
     # [c3_void]
     #     type = ParsedAux
     #     variable = c3
@@ -328,7 +344,7 @@ A = 5
         coupled_variables = 'c3  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = 'if(c3>0.1, M*1e5*(c3-0.1), 0)'
+        expression = 'if(c3>0.05, M*1e5*(c3-0.05), 0)'
     []
     # mobility for polymers
     [mobility1]
@@ -480,7 +496,7 @@ A = 5
     nl_max_its = 30
     nl_abs_tol = 1e-10
 
-    dtmax = 1e-7
+    # dtmax = 1e-7
 
     [TimeStepper]
         # Turn on time stepping
@@ -500,56 +516,69 @@ A = 5
     # off_diagonal_
     scaling_group_variables = 'c1 c2; w1 w2'
 
-    # [Adaptivity]
-    #     coarsen_fraction = 0.1
-    #     refine_fraction = 0.7
-    #     max_h_level = 3
-    # []
+    [Adaptivity]
+        coarsen_fraction = 0.1
+        refine_fraction = 0.7
+        max_h_level = 3
+        inactive = 'eta'
+    []
 
 []
 
-[Adaptivity]
-    marker = combined_marker
-    max_h_level = 3
-    [Indicators]
-        [indicator_c1]
-            type = GradientJumpIndicator
-            variable = c1
-        []
-        [indicator_c2]
-            type = GradientJumpIndicator
-            variable = c2
-        []
-        [indicator_eta]
-            type = GradientJumpIndicator
-            variable = eta
-        []
-    []
-    [Markers]
-        [marker_c1]
-            type = ErrorFractionMarker
-            indicator = indicator_c1
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [marker_c2]
-            type = ErrorFractionMarker
-            indicator = indicator_c2
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [marker_eta]
-            type = ErrorFractionMarker
-            indicator = indicator_eta
-            coarsen = 0.1
-            refine = 0.7
-        []
-        [combined_marker]
-            type = ComboMarker
-            markers = 'marker_c1 marker_c2 marker_eta'
-        []
-    []
-[]
+# [Adaptivity]
+#     marker = marker_c3
+#     max_h_level = 2
+#     [Indicators]
+#         [indicator_c1]
+#             type = GradientJumpIndicator
+#             variable = c1
+#         []
+#         [indicator_c2]
+#             type = GradientJumpIndicator
+#             variable = c2
+#         []
+#         [indicator_eta]
+#             type = GradientJumpIndicator
+#             variable = eta
+#         []
+#         [indicator_c3]
+#             type = GradientJumpIndicator
+#             variable = c3
+#             # block = 1
+#         []
+#     []
+#     [Markers]
+#         [marker_c1]
+#             type = ErrorFractionMarker
+#             indicator = indicator_c1
+#             coarsen = 0.1
+#             refine = 0.7
+#         []
+#         [marker_c2]
+#             type = ErrorFractionMarker
+#             indicator = indicator_c2
+#             coarsen = 0.1
+#             refine = 0.7
+#         []
+#         [marker_eta]
+#             type = ErrorFractionMarker
+#             indicator = indicator_eta
+#             coarsen = 0.1
+#             refine = 0.7
+#         []
+#         [marker_c3]
+#             type = ErrorFractionMarker
+#             indicator = indicator_c3
+#             # block = 1
+#             coarsen = 0.1
+#             refine = 0.7
+#         []
+#         [combined_marker]
+#             type = ComboMarker
+#             markers = 'marker_c3 marker_eta'
+#         []
+#     []
+# []
 
 [Times]
     [out_times]
@@ -562,7 +591,7 @@ A = 5
     [ex]
         type = Exodus
         file_base = output/${outfile}
-        time_step_interval = 1
+        time_step_interval = 2
         execute_on = 'INITIAL FINAL TIMESTEP_END'
     []
     [csv]

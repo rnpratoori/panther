@@ -1,3 +1,7 @@
+a = 0.5
+rc = 0.15
+dc = 0.4
+
 nx = 400     # number of elements in x
 ny = 600     # number of elements in y
 dx = 2.00       # ND size of the side in x
@@ -194,7 +198,7 @@ delta_eta = 0
 [UserObjects]
     [2phase]
         type = SolutionUserObject
-        mesh = 'output/2p_void_ic.e'
+        mesh = 'ic_2pv/2pv_${a}_ic_${rc}_${dc}.e'
         system_variables = 'c1_total c2_total eta'
         timestep = LATEST
     []
@@ -536,7 +540,7 @@ delta_eta = 0
 [Outputs]
     [ex]
         type = Exodus
-        file_base = output/ic/3pv_0.5_ic_0.15_0.4
+        file_base = ic_3pv/3pv_${a}_ic_${rc}_${dc}
         time_step_interval = 1
         execute_on = 'INITIAL'
     []
