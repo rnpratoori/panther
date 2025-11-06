@@ -1,4 +1,6 @@
-timestep = 010
+filename = 3pv_0.4_0.10_0.4
+number = 1
+# timestep = ${fparse number-1}
 
 nx = 202     # number of elements in x
 ny = 100     # number of elements in y
@@ -100,7 +102,7 @@ dy = 1.00       # ND size of the side in y
 [UserObjects]
     [3phase]
       type = SolutionUserObject
-      mesh = 'output/mechic/3pv_0.3_0.05_0.2_mech_ic.e-s${timestep}'
+      mesh = 'mech_ic/ic/${filename}_mechic.e'
       system_variables = 'c1 c2'
       # timestep = ${timestep}
     []
@@ -124,14 +126,6 @@ dy = 1.00       # ND size of the side in y
       type = ParsedFunction
       expression = '1e0*t'
     []
-  #   [pully]
-  #     type = ParsedFunction
-  #     expression = '-2000 * t'
-  #   []
-    # [mu_function]
-    #   type = ParsedFunction
-    #   expression = '1e6*exp(-10*(1-c1-c2))'
-    # []
 []
 
 [BCs]
@@ -168,7 +162,7 @@ dy = 1.00       # ND size of the side in y
       type = ParsedMaterial
         property_name = mu
         coupled_variables = 'c1 c2'
-        expression = '(1e5*c1 + 1e6*c2)*exp(-10*(1-c1-c2-0.5))'
+        expression = '(1e6*c1 + 4e5*c2)*exp(-23*(1-c1-c2))'
         output_properties = 'mu'
         outputs = 'ex'
     []
@@ -213,18 +207,11 @@ dy = 1.00       # ND size of the side in y
     type = Transient
   
     solve_type = 'newton'
-    # line_search = none
   
-    # petsc_options = ''
     petsc_options_iname = '-pc_type -ksp_type'
     petsc_options_value = 'lu gmres'
 
-    # petsc_options = '-pc_svd_monitor -ksp_view'
-    petsc_options = '-ksp_converged_reason -snes_converged_reason'
-    # petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
-
-    # petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    # petsc_options_value = 'asm      31                  preonly      ilu          1'
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew -ksp_monitor_cancel'
 
     line_search = 'basic'
     
@@ -243,41 +230,26 @@ dy = 1.00       # ND size of the side in y
         dt = 1e-2
       []
   
-    # [TimeStepper]
-    #   # Turn on time stepping
-    #   type = IterationAdaptiveDT
-    #   dt = 1.0e-4
-    #   cutback_factor = 0.8
-    #   growth_factor = 1.5
-    #   optimal_iterations = 10
-    # []
     end_time = 1.0
   
     [Predictor]
           type = SimplePredictor
           scale = 1
     []
-
-    # [Adaptivity]
-    #     coarsen_fraction = 0.1
-    #     refine_fraction = 0.7
-    #     max_h_level = 2
-    # []
 []
   
   
   [Outputs]
     [ex]
         type = Exodus
-        file_base = 'output/mech_void/mech_${timestep}'
+        file_base = 'output/mech_void/${filename}/${filename}_${number}'
         time_step_interval = 1
         execute_on = 'TIMESTEP_END INITIAL FINAL'
     []
     [csv]
         type = CSV
-        file_base = 'output/mech_void/mech_${timestep}'
+        file_base = 'output/mech_void/${filename}/${filename}_${number}'
         execute_on = 'timestep_end'
         show = 'reaction_force_x avg_disp_right'
       []
   []
-
