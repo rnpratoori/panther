@@ -1,6 +1,6 @@
-a = 0.5
-rc = 0.15
-dc = 0.4
+a = 0.4
+rc = 0.05
+dc = 0.2
 
 nx = 400     # number of elements in x
 ny = 600     # number of elements in y
