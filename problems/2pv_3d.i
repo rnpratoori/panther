@@ -1,19 +1,25 @@
-nx = 400     # number of elements per side
+rc = 0.10
+dc = 0.4
+
+nx = 200     # number of elements per side
 ny = 200     # number of elements per side
-dx = 2       # ND size of the side
+nz = 200     # number of elements per side
+dx = 1       # ND size of the side
 dy = 1       # ND size of the side
-a = 0.5    # type A monomer density
-M = 1e0     # Initial mobility, depends on swell ratio
-# S = 1e+0    # Scaling factor
-Cn = 5e-2   # Cahn number
+dz = 1       # ND size of the side
+a = 0.4     # type A monomer density
+M = 1       # Initial mobility, depends on swell ratio
+Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 # Flory-Huggins approximation
-chi = 1.0 # Flory-Huggins parameter
-# N1 = 5     # Degree of polymerisation
-# N2 = 5     # Degree of polymerisation
-# R = 1     # Universal gas constant
-# T = 1     # Temperature in Kelvin
+chi12 = 1.0   # Flory-Huggins parameter
+# chi13 = 10.0   # Flory-Huggins parameter
+# chi23 = 10.0   # Flory-Huggins parameter
+# N1 = 5       # Degree of polymerisation
+# N2 = 5       # Degree of polymerisation
+# R = 1  # Universal gas constant
+# T = 1 # Temperature in Kelvin
 p = -1.38629e-1      # 0th coefficient of taylor function
 q = 0               # 1st coefficient of taylor function
 r = 0.4            # 2nd coefficient of taylor function
@@ -21,20 +27,38 @@ s = 0               # 3rd coefficient of taylor function
 t = 2.66667e-1      # 4th coefficient of taylor function
 u = 0               # 5th coefficient of taylor function
 v = 4.26667e-1      # 6th coefficient of taylor function
-# z = 1          # compression factor
 c0 = 0.5
-beta = 1.0e-3       # Stability parameter
+beta = 1e-3
+delta = 0
+
+[GlobalParams]
+  block = 0
+[]
 
 [Mesh]
+    add_subdomain_ids = '1'
     [2p]
         # generate a 2D mesh
         type = GeneratedMeshGenerator
-        dim = 2
+        dim = 3
         nx = ${nx}
         ny = ${ny}
+        nz = ${nz}
         xmax = ${dx}
         ymax = ${dy}
-        # uniform_refine = 2
+        zmax = ${dz}
+    []
+[]
+
+[MeshModifiers]
+    [void]
+        type = CoupledVarThresholdElementSubdomainModifier
+        coupled_var = eta
+        criterion_type = ABOVE
+        subdomain_id = 1
+        complement_subdomain_id = 0
+        threshold = 0
+        execute_on = 'INITIAL TIMESTEP_BEGIN'
     []
 []
 
@@ -49,14 +73,43 @@ beta = 1.0e-3       # Stability parameter
         order = FIRST
         family = LAGRANGE
     []
+    # void variable
+    [eta]
+        order = FIRST
+        family = LAGRANGE
+        block = '0  1'
+    []
 []
 
 [ICs]
-    [pvfIC]
+    [c]
         type = RandomIC
         variable = c
         seed = 123
         distribution = Normal_a
+    []
+    [eta]
+        type = SpecifiedSmoothCircleIC
+        radii =         '0.10 0.10 0.10
+                        0.10 0.10 0.10
+                        0.10 0.10 0.10
+                        0.10 0.10 0.10'
+        x_positions =   '0.20 0.80 1.40
+                        0.20 0.80 1.40
+                        0.20 0.80 1.40
+                        0.20 0.80 1.40'
+        y_positions =   '0.80 0.80 0.80
+                        0.20 0.20 0.20
+                        0.80 0.80 0.80
+                        0.20 0.20 0.20'
+        z_positions =   '0.80 0.80 0.80
+                        0.80 0.80 0.80
+                        0.20 0.20 0.20
+                        0.20 0.20 0.20'
+        variable = eta
+        invalue = ${fparse 1.0-delta}
+        outvalue = ${fparse -1.0+delta}
+        int_width = 0.01
     []
 []
 
@@ -73,13 +126,22 @@ beta = 1.0e-3       # Stability parameter
         order = CONSTANT
         family = MONOMIAL
     []
+    [f_int_density]
+        order = CONSTANT
+        family = MONOMIAL
+    []
     [c2]
         order = FIRST
         family = LAGRANGE
     []
-    [f_int_density]
-        order = CONSTANT
-        family = MONOMIAL
+    # Variables to be read in dissolution simulation
+    [c1_total]
+        order = FIRST
+        family = LAGRANGE
+    []
+    [c2_total]
+        order = FIRST
+        family = LAGRANGE
     []
 []
 
@@ -102,23 +164,21 @@ beta = 1.0e-3       # Stability parameter
         kappa_name = kappa
         w = w
     []
+    [null]
+        type = NullKernel
+        variable = eta
+        block = '0  1'
+    []
 []
 
 [AuxKernels]
-    # calculate energy density from local and gradient energies (J/mol/mum^2)
+     # calculate energy density from local and gradient energies (J/mol/mum^2)
     [f_density]
         type = TotalFreeEnergy
         variable = f_density
         f_name = 'f_tot'
         kappa_names = 'kappa'
         interfacial_vars = c
-    []
-    # calculate c2 from c
-    [c2]
-        type = ParsedAux
-        variable = c2
-        coupled_variables = 'c'
-        expression = '1 - c'
     []
     # calculate interfacial energy density
     [f_int_density]
@@ -128,6 +188,27 @@ beta = 1.0e-3       # Stability parameter
         material_properties = 'f_tot'
         expression = 'f_density - f_tot'
     []
+    # calculate c2 from c
+    [c2]
+        type = ParsedAux
+        variable = c2
+        coupled_variables = 'c'
+        expression = '1 - c'
+        block = 0
+        execute_on = 'INITIAL'
+    []
+    [c1_total]
+        type = ParsedAux
+        variable = c1_total
+        coupled_variables = 'c  eta'
+        expression = 'if(eta<0.999, c, 0)'
+    []
+    [c2_total]
+        type = ParsedAux
+        variable = c2_total
+        coupled_variables = 'c  eta'
+        expression = 'if(eta<0.999, 1 - c, 0)'
+    []
 []
 
 [Materials]
@@ -135,16 +216,15 @@ beta = 1.0e-3       # Stability parameter
         type = GenericFunctionMaterial
         prop_names = 'kappa'
         prop_values = '${fparse k}'
+        block = '0  1'
     []
-    [mobility1]
+    [mobility]
         type = DerivativeParsedMaterial
         property_name = M
-        coupled_variables = 'c'
+        coupled_variables = 'c  eta'
         constant_names = 'M'
         constant_expressions = '${M}'
-        expression = '(M*16*c^2*(1-c)^2)'
-        # expression = '(M)/S'
-        # derivative_order = 2
+        expression = '(M*16*c^2*(1-c)^2)*(1-eta)/2'
     []
     # mixing energy based on
     # Flory-Huggins theory
@@ -157,7 +237,7 @@ beta = 1.0e-3       # Stability parameter
                                 c0     chi'
         constant_expressions = '${p}    ${q}    ${r}    ${s}
                                 ${t}    ${u}    ${v}
-                                ${c0}   ${chi}'
+                                ${c0}   ${chi12}'
         expression = 'p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + chi*c*(1-c)'
         derivative_order = 2
     []
@@ -218,24 +298,12 @@ beta = 1.0e-3       # Stability parameter
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'
 
-    # petsc_options_iname = '-pc_type -ksp_type -pc_factor_mat_solver_type'
-    # petsc_options_value = 'lu       preonly   mumps'
-
     line_search = 'basic'
-
-    # petsc_options_iname = '-pc_type'
-    # petsc_options_value = 'lu'
-
-    # # Alternative preconditioning options using Hypre (algebraic multi-grid)
-    # petsc_options_iname = '-pc_type -pc_hypre_type'
-    # petsc_options_value = 'hypre    boomeramg'
 
     l_tol = 1e-10
     l_abs_tol = 1e-10
     nl_max_its = 30
     nl_abs_tol = 1e-10
-
-    # dtmax = 1e-3
 
     [TimeStepper]
         # Turn on time stepping
@@ -251,19 +319,13 @@ beta = 1.0e-3       # Stability parameter
     # Automatic scaling for u and w
     automatic_scaling = true
     scaling_group_variables = 'c w'
-
-    # [Adaptivity]
-    #     coarsen_fraction = 0.1
-    #     refine_fraction = 0.7
-    #     max_h_level = 2
-    # []
 []
 
 [Outputs]
     [ex]
         type = Exodus
-        file_base = ic_2p/2phase_${a}
-        time_step_interval = 100
-        execute_on = 'TIMESTEP_END INITIAL FINAL'
+        file_base = ic/2pv_${a}_ic_${rc}_${dc}_3d_2
+        time_step_interval = 10
+        execute_on = 'INITIAL TIMESTEP_END FINAL'
     []
 []

@@ -1,29 +1,16 @@
-nx = 400     # number of elements per side
-ny = 200     # number of elements per side
+nx = 200     # number of elements per side
+ny = 100     # number of elements per side
 dx = 2       # ND size of the side
 dy = 1       # ND size of the side
 a = 0.5    # type A monomer density
 M = 1e0     # Initial mobility, depends on swell ratio
-# S = 1e+0    # Scaling factor
 Cn = 5e-2   # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 # Flory-Huggins approximation
 chi = 1.0 # Flory-Huggins parameter
-# N1 = 5     # Degree of polymerisation
-# N2 = 5     # Degree of polymerisation
-# R = 1     # Universal gas constant
-# T = 1     # Temperature in Kelvin
-p = -1.38629e-1      # 0th coefficient of taylor function
-q = 0               # 1st coefficient of taylor function
-r = 0.4            # 2nd coefficient of taylor function
-s = 0               # 3rd coefficient of taylor function
-t = 2.66667e-1      # 4th coefficient of taylor function
-u = 0               # 5th coefficient of taylor function
-v = 4.26667e-1      # 6th coefficient of taylor function
-# z = 1          # compression factor
-c0 = 0.5
-beta = 1.0e-3       # Stability parameter
+N1 = 5     # Degree of polymerisation
+N2 = 5     # Degree of polymerisation
 
 [Mesh]
     [2p]
@@ -152,23 +139,9 @@ beta = 1.0e-3       # Stability parameter
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names =        'p      q       r       s
-                                t      u        v
-                                c0     chi'
-        constant_expressions = '${p}    ${q}    ${r}    ${s}
-                                ${t}    ${u}    ${v}
-                                ${c0}   ${chi}'
-        expression = 'p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + chi*c*(1-c)'
-        derivative_order = 2
-    []
-    # beta penalty term
-    [beta_penalty]
-        type = DerivativeParsedMaterial
-        property_name = f_beta
-        coupled_variables = 'c'
-        constant_names = 'beta'
-        constant_expressions = '${beta}'
-        expression = 'beta*(1/c + 1/(1-c))'
+        constant_names =        'chi    N1     N2'
+        constant_expressions = '${chi}    ${N1}    ${N2}'
+        expression = 'c*log(c)/N1 + (1-c)*log(1-c)/N2 + chi*c*(1-c)'
         derivative_order = 2
     []
     # Total free energy
@@ -177,7 +150,7 @@ beta = 1.0e-3       # Stability parameter
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c'
-        sum_materials = 'f_mix  f_beta'
+        sum_materials = 'f_mix'
         derivative_order = 2
     []
 []

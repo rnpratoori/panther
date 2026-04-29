@@ -145,7 +145,7 @@ delta = 0.025
 [UserObjects]
   [2phase]
     type = SolutionUserObject
-    mesh = 'output/2phase_taylor.e'
+    mesh = 'ic_2p/2phase_0.3.e'
     system_variables = 'c c2'
     timestep = LATEST
   []
@@ -350,9 +350,7 @@ delta = 0.025
     solve_type = 'NEWTON'
     scheme = bdf2
 
-    # petsc_options = '-pc_svd_monitor -ksp_view'
-    petsc_options = '-ksp_converged_reason -snes_converged_reason'
-    # petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
+    petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew '
 
     petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
     petsc_options_value = 'asm      31                  preonly      ilu          1'

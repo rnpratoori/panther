@@ -1,5 +1,5 @@
-rc = 0.05
-dc = 0.2
+rc = 0.10
+dc = 0.4
 
 nx = 200     # number of elements per side
 ny = 100     # number of elements per side
@@ -11,24 +11,9 @@ Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
 # Flory-Huggins approximation
-chi12 = 1.0   # Flory-Huggins parameter
-# chi13 = 10.0   # Flory-Huggins parameter
-# chi23 = 10.0   # Flory-Huggins parameter
-# N1 = 5       # Degree of polymerisation
-# N2 = 5       # Degree of polymerisation
-# N3 = 100     # Penalty term for void
-# R = 1  # Universal gas constant
-# T = 1 # Temperature in Kelvin
-p = -1.38629e-1      # 0th coefficient of taylor function
-q = 0               # 1st coefficient of taylor function
-r = 0.4            # 2nd coefficient of taylor function
-s = 0               # 3rd coefficient of taylor function
-t = 2.66667e-1      # 4th coefficient of taylor function
-u = 0               # 5th coefficient of taylor function
-v = 4.26667e-1      # 6th coefficient of taylor function
-c0 = 0.5
-beta = 1e-3
-delta = 0
+chi = 1.0   # Flory-Huggins parameter
+N1 = 5       # Degree of polymerisation
+N2 = 5       # Degree of polymerisation
 
 [GlobalParams]
   block = 0
@@ -87,21 +72,17 @@ delta = 0
     []
     [eta]
         type = SpecifiedSmoothCircleIC
-        radii =         '0.05 0.05 0.05 0.05 0.05 0.05
-                        0.05 0.05 0.05 0.05 0.05 0.05
-                        0.05 0.05 0.05 0.05 0.05 0.05'
-        x_positions =   '0.15 0.45 0.75 1.05 1.35 1.65
-                        0.15 0.45 0.75 1.05 1.35 1.65
-                        0.15 0.45 0.75 1.05 1.35 1.65'
-        y_positions =   '0.85 0.85 0.85 0.85 0.85 0.85
-                        0.55 0.55 0.55 0.55 0.55 0.55
-                        0.25 0.25 0.25 0.25 0.25 0.25'
-        z_positions =   '0.00 0.00 0.00 0.00 0.00 0.00
-                        0.00 0.00 0.00 0.00 0.00 0.00
-                        0.00 0.00 0.00 0.00 0.00 0.00'
+        radii =         '0.10 0.10 0.10
+                        0.10 0.10 0.10'
+        x_positions =   '0.20 0.80 1.40
+                        0.20 0.80 1.40'
+        y_positions =   '0.80 0.80 0.80
+                        0.20 0.20 0.20'
+        z_positions =   '0 0 0
+                        0 0 0'
         variable = eta
-        invalue = ${fparse 1.0-delta}
-        outvalue = ${fparse -1.0+delta}
+        invalue = ${fparse 1.0}
+        outvalue = ${fparse -1.0}
         int_width = 0.05
     []
 []
@@ -115,14 +96,6 @@ delta = 0
 []
 
 [AuxVariables]
-    [f_density]
-        order = CONSTANT
-        family = MONOMIAL
-    []
-    [f_int_density]
-        order = CONSTANT
-        family = MONOMIAL
-    []
     [c2]
         order = FIRST
         family = LAGRANGE
@@ -135,6 +108,11 @@ delta = 0
     [c2_total]
         order = FIRST
         family = LAGRANGE
+    []
+    [cv_total]
+        order = FIRST
+        family = LAGRANGE
+        block = '0  1'
     []
 []
 
@@ -165,22 +143,6 @@ delta = 0
 []
 
 [AuxKernels]
-     # calculate energy density from local and gradient energies (J/mol/mum^2)
-    [f_density]
-        type = TotalFreeEnergy
-        variable = f_density
-        f_name = 'f_tot'
-        kappa_names = 'kappa'
-        interfacial_vars = c
-    []
-    # calculate interfacial energy density
-    [f_int_density]
-        type = ParsedAux
-        variable = f_int_density
-        coupled_variables = 'f_density'
-        material_properties = 'f_tot'
-        expression = 'f_density - f_tot'
-    []
     # calculate c2 from c
     [c2]
         type = ParsedAux
@@ -201,6 +163,13 @@ delta = 0
         variable = c2_total
         coupled_variables = 'c  eta'
         expression = 'if(eta<0.999, 1 - c, 0)'
+    []
+    [cv_total]
+        type = ParsedAux
+        variable = cv_total
+        coupled_variables = 'eta'
+        expression = '(eta+1)/2'
+        block = '0  1'
     []
 []
 
@@ -225,23 +194,9 @@ delta = 0
         type = DerivativeParsedMaterial
         property_name = f_mix
         coupled_variables = 'c'
-        constant_names =        'p      q       r       s
-                                t      u        v
-                                c0     chi'
-        constant_expressions = '${p}    ${q}    ${r}    ${s}
-                                ${t}    ${u}    ${v}
-                                ${c0}   ${chi12}'
-        expression = 'p + q*(c-c0) + r*(c-c0)^2 + s*(c-c0)^3 + t*(c-c0)^4 + u*(c-c0)^5 + v*(c-c0)^6 + chi*c*(1-c)'
-        derivative_order = 2
-    []
-    # beta penalty term
-    [beta_penalty]
-        type = DerivativeParsedMaterial
-        property_name = f_beta
-        coupled_variables = 'c'
-        constant_names = 'beta'
-        constant_expressions = '${beta}'
-        expression = 'beta*(1/c + 1/(1-c))'
+        constant_names =        'chi    N1     N2'
+        constant_expressions = '${chi}    ${N1}    ${N2}'
+        expression = 'c*log(c)/N1 + (1-c)*log(1-c)/N2 + chi*c*(1-c)'
         derivative_order = 2
     []
     # Total free energy
@@ -250,7 +205,7 @@ delta = 0
         type = DerivativeSumMaterial
         property_name = f_tot
         coupled_variables = 'c'
-        sum_materials = 'f_mix  f_beta'
+        sum_materials = 'f_mix'
         derivative_order = 2
     []
 []
@@ -263,17 +218,6 @@ delta = 0
 []
 
 [Postprocessors]
-    # Calculate total free energy at each timestep
-    [total_energy]
-        type = ElementIntegralVariablePostprocessor
-        variable = f_density
-        execute_on = 'initial timestep_end'
-    []
-    [interfacial_energy]
-        type = ElementIntegralVariablePostprocessor
-        variable = f_int_density
-        execute_on = 'initial timestep_end'
-    []
     [./elapsed]
         type = PerfGraphData
         section_name = "Root"
@@ -288,8 +232,11 @@ delta = 0
 
     petsc_options = '-ksp_converged_reason -snes_converged_reason -snes_ksp_ew -ksp_monitor_cancel'
 
-    petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
-    petsc_options_value = 'asm      31                  preonly      ilu          1'
+    # petsc_options_iname = '-pc_type -ksp_gmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap'
+    # petsc_options_value = 'asm      31                  preonly      ilu          1'
+
+    petsc_options_iname = '-pc_type -ksp_type -pc_factor_mat_solver_type'
+    petsc_options_value = 'lu       preonly   mumps'
 
     line_search = 'basic'
 
@@ -319,6 +266,6 @@ delta = 0
         type = Exodus
         file_base = ic_2pv/2pv_${a}_ic_${rc}_${dc}
         time_step_interval = 10
-        execute_on = 'INITIAL FINAL'
+        execute_on = 'INITIAL TIMESTEP_END FINAL'
     []
 []
