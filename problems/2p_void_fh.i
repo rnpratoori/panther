@@ -49,6 +49,7 @@ N2 = 5       # Degree of polymerisation
     [c]
         order = FIRST
         family = LAGRANGE
+        block = '0  1'
     []
     # Chemical potential (nJ/mol)
     [w]
@@ -104,10 +105,12 @@ N2 = 5       # Degree of polymerisation
     [c1_total]
         order = FIRST
         family = LAGRANGE
+        block = '0  1'
     []
     [c2_total]
         order = FIRST
         family = LAGRANGE
+        block = '0  1'
     []
     [cv_total]
         order = FIRST
@@ -140,6 +143,11 @@ N2 = 5       # Degree of polymerisation
         variable = eta
         block = '0  1'
     []
+    [null_c]
+        type = NullKernel
+        variable = c
+        block = 1
+    []
 []
 
 [AuxKernels]
@@ -156,13 +164,15 @@ N2 = 5       # Degree of polymerisation
         type = ParsedAux
         variable = c1_total
         coupled_variables = 'c  eta'
-        expression = 'if(eta<0.999, c, 0)'
+        expression = 'c * (1 - eta) / 2'
+        block = '0  1'
     []
     [c2_total]
         type = ParsedAux
         variable = c2_total
         coupled_variables = 'c  eta'
-        expression = 'if(eta<0.999, 1 - c, 0)'
+        expression = '(1 - c) * (1 - eta) / 2'
+        block = '0  1'
     []
     [cv_total]
         type = ParsedAux
