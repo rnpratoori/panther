@@ -84,7 +84,7 @@ N2 = 5       # Degree of polymerisation
         variable = eta
         invalue = ${fparse 1.0}
         outvalue = ${fparse -1.0}
-        int_width = 0.05
+        int_width = 0
     []
 []
 
@@ -164,21 +164,21 @@ N2 = 5       # Degree of polymerisation
         type = ParsedAux
         variable = c1_total
         coupled_variables = 'c  eta'
-        expression = 'c * (1 - eta) / 2'
+        expression = 'if(eta<0., c, 0)'
         block = '0  1'
     []
     [c2_total]
         type = ParsedAux
         variable = c2_total
         coupled_variables = 'c  eta'
-        expression = '(1 - c) * (1 - eta) / 2'
+        expression = 'if(eta<0., 1 - c, 0)'
         block = '0  1'
     []
     [cv_total]
         type = ParsedAux
         variable = cv_total
         coupled_variables = 'eta'
-        expression = '(eta+1)/2'
+        expression = 'if(eta>=0., 1, 0)'
         block = '0  1'
     []
 []
@@ -274,7 +274,7 @@ N2 = 5       # Degree of polymerisation
 [Outputs]
     [ex]
         type = Exodus
-        file_base = ic_2pv/2pv_${a}_ic_${rc}_${dc}
+        file_base = ic_2pv/2pv_${a}_ic_${rc}_${dc}_sharp
         time_step_interval = 10
         execute_on = 'INITIAL TIMESTEP_END FINAL'
     []
