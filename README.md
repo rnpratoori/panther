@@ -82,7 +82,7 @@ Makefile, run_tests Build and test entry points
    [installation instructions](https://mooseframework.inl.gov/getting_started/installation/index.html).
 2. Clone this repository:
    ```
-   git clone https://github.com/rnpratoori/panther
+   git clone https://github.com/baskargroup/panther
    ```
 3. Build the application (the Makefile finds MOOSE via the `moose` submodule or
    the `MOOSE_DIR` environment variable):
