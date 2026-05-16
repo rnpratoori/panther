@@ -1,3 +1,5 @@
+"""Render c1/c3-focused composition movies with custom color/opacity maps."""
+
 import os
 import netCDF4
 import numpy as np

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Launch a sweep of DBC_split_nd.i simulations over composition, chi, N, and seed.
+# The template placeholders are replaced inside a per-case output directory.
+
 # Check if the number of processes is provided as a command-line argument
 if [ -z "$1" ]; then
   echo "Usage: $0 <number_of_processes>"

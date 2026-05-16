@@ -1,3 +1,5 @@
+"""Render a single nodal variable from Exodus output to an off-screen movie."""
+
 import os
 import netCDF4
 import numpy as np

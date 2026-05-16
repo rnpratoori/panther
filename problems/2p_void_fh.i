@@ -1,6 +1,9 @@
+# Two-phase Cahn-Hilliard dissolution case using Flory-Huggins free energy.
+# rc controls void radius and dc controls spacing between neighboring voids.
 rc = 0.10
 dc = 0.4
 
+# Mesh, domain, and transport parameters.
 nx = 200     # number of elements per side
 ny = 100     # number of elements per side
 dx = 2       # ND size of the side

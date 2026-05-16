@@ -1,3 +1,5 @@
+"""Plot energy columns from a MOOSE CSV output over the early-time window."""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import os

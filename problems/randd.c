@@ -1,3 +1,6 @@
+// Reference void layouts for copying radii and center coordinates into input files.
+// Each section is labeled as "<radius> <edge_spacing>".
+
 // 0.05 0.2
 radii =         '0.05 0.05 0.05 0.05 0.05 0.05
                         0.05 0.05 0.05 0.05 0.05 0.05
@@ -57,7 +60,6 @@ radii =         '0.15 0.15 0.15'
         x_positions =   '0.25 0.95 1.65'
         y_positions =   '0.75 0.75 0.75'
         z_positions =   '0.00 0.00 0.00'
-
 
 
 

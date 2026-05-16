@@ -1,3 +1,5 @@
+# Template input for DBC.sh parameter sweeps.
+# DBC.sh replaces a_val, x_val, N_val, and s_val before each run.
 n = 200     # number of elements per side
 d = 1       # ND size of the side
 D = 1e+0    # actual size of the side in 0.1 mum

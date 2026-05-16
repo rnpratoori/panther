@@ -1,3 +1,5 @@
+"""Render ternary Exodus fields to an RGB composition movie."""
+
 import os
 import netCDF4
 import numpy as np

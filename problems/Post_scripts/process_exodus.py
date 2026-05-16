@@ -1,3 +1,5 @@
+"""Create an initial-condition Exodus file from the last step of another file."""
+
 import meshio
 import numpy as np
 import sys

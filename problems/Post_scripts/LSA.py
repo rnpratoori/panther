@@ -1,3 +1,5 @@
+"""Linear stability analysis utilities for the ternary Cahn-Hilliard model."""
+
 import math
 import cmath
 import numpy as np
@@ -5,8 +7,6 @@ import matplotlib.pyplot as plt
 import ternary
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
-
-# Python code to perform linear stability analysis for 3 phase cahn hilliard equation
 
 # Define free energy functions and gradients
 
@@ -159,7 +159,6 @@ cbar.set_label("$\lambda_1$", fontsize=12)
 # Title
 plt.title("Ternary Contour Plot of $\lambda_1$")
 plt.show()
-
 
 
 

@@ -1,7 +1,10 @@
+# Alternate three-phase void initial-condition generator with parametric void layout.
+# a is the mean composition; rc and dc control void radius and spacing.
 a = 0.4
 rc = 0.05
 dc = 0.2
 
+# Mesh, domain, and transport parameters.
 nx = 400     # number of elements in x
 ny = 600     # number of elements in y
 dx = 2.00       # ND size of the side in x
@@ -11,6 +14,7 @@ s = 1e+0    # Scaling factor
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
+# Flory-Huggins constants used to build the Taylor approximation below.
 chi12 = 1.0   # Flory-Huggins parameter
 chi13 = 0.1   # Flory-Huggins parameter
 chi23 = 0.1   # Flory-Huggins parameter
@@ -19,6 +23,7 @@ chi23 = 0.1   # Flory-Huggins parameter
 # N3 = 1       # Degree of polymerisation
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
+# Coefficients for the two-variable Taylor-expanded ternary free energy.
 A00 = -0.485203
 A10 = -0.384112
 A20 = 1.4

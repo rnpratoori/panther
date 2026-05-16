@@ -1,3 +1,5 @@
+"""Compute block and depth-averaged composition histories from Exodus output."""
+
 import os
 import netCDF4
 import numpy as np

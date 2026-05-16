@@ -1,3 +1,5 @@
+"""Animate precomputed average composition histories as MP4 or GIF output."""
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter, FFMpegWriter
 

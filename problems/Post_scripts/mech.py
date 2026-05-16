@@ -1,3 +1,5 @@
+"""Post-process mechanics CSV files into stress-stretch and energy plots."""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob

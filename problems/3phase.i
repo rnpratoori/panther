@@ -1,3 +1,5 @@
+# Three-phase Cahn-Hilliard spinodal decomposition case in 2D.
+# c1 and c2 are independent conserved variables; c3 = 1 - c1 - c2.
 n = 200     # number of elements per side
 d = 1       # ND size of the side
 a = 0.4     # type A monomer density
@@ -16,6 +18,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 # N3 = 1        # Degree of polymerisation
 # R = 1         # Universal gas constant
 # T = 1         # Temperature in Kelvin
+# Coefficients for the two-variable Taylor-expanded ternary free energy.
 A00 = 1.39797e-1
 A10 = 1.15888e-1
 A20 = -6e-1

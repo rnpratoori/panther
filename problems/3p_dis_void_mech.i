@@ -1,7 +1,10 @@
+# Mechanical pull test for a three-phase polymer/void state.
+# Composition fields are read from a chemistry output and mapped to block 1.
 filename = 3pv_0.4_0.10_0.4
 number = 1
 # timestep = ${fparse number-1}
 
+# Mesh and loading setup.
 nx = 202     # number of elements in x
 ny = 100     # number of elements in y
 # dx = 1.02       # ND size of the side in x

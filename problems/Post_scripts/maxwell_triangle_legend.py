@@ -1,3 +1,5 @@
+"""Generate an RGB Maxwell triangle legend for ternary composition plots."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 

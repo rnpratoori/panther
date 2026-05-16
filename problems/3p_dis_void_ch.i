@@ -1,3 +1,5 @@
+# Coupled three-phase dissolution and void-evolution chemistry problem.
+# c1/c2 evolve by Cahn-Hilliard; eta evolves by Allen-Cahn for the void phase.
 nx = 100     # number of elements in x
 ny = 300     # number of elements in y
 dx = 1.00       # ND size of the side in x
@@ -8,6 +10,7 @@ k = ${fparse Cn^2}    # gradient energy coefficient
 Cn_eta = 5e-2  # Cahn number for AC variable
 k_eta = ${fparse Cn_eta^2}    # gradient energy coefficient for AC
 
+# Flory-Huggins constants used to build the Taylor approximation below.
 chi12 = 1.0   # Flory-Huggins parameter
 chi13 = 0.1   # Flory-Huggins parameter
 chi23 = 0.1   # Flory-Huggins parameter
@@ -16,6 +19,7 @@ chi23 = 0.1   # Flory-Huggins parameter
 # N3 = 1       # Degree of polymerisation
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
+# Coefficients for the two-variable Taylor-expanded ternary free energy.
 A00 = -0.485203
 A10 = -0.384112
 A20 = 1.4

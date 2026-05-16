@@ -1,3 +1,5 @@
+"""Save a still image of the final pvf field from Exodus output."""
+
 import os
 from os import listdir
 from os.path import isfile, join

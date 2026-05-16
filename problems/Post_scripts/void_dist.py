@@ -1,3 +1,5 @@
+"""Calculate circle layouts and area coverage for 2D void-spacing studies."""
+
 import math
 from itertools import product
 

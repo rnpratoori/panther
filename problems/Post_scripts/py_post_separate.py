@@ -1,3 +1,5 @@
+"""Render separate RGB composition movies for full and block-filtered meshes."""
+
 import os
 import netCDF4
 import numpy as np

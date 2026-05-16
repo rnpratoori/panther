@@ -1,3 +1,5 @@
+"""Report nodal-variable extrema from Exodus outputs at the final timestep."""
+
 import os
 import netCDF4
 import numpy as np

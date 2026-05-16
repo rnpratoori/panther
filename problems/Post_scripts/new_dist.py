@@ -1,3 +1,5 @@
+"""Overwrite or add nodal variables in Exodus files for distribution studies."""
+
 import os
 import shutil
 import netCDF4

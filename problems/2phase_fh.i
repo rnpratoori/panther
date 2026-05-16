@@ -1,3 +1,5 @@
+# Two-phase Cahn-Hilliard spinodal decomposition case using Flory-Huggins energy.
+# N1 and N2 set the polymerization degrees in the logarithmic free energy.
 nx = 200     # number of elements per side
 ny = 100     # number of elements per side
 dx = 2       # ND size of the side

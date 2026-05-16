@@ -1,6 +1,9 @@
+# Two-phase Cahn-Hilliard dissolution case with fixed circular voids.
+# rc controls void radius and dc controls spacing between neighboring voids.
 rc = 0.05
 dc = 0.2
 
+# Mesh, domain, and transport parameters.
 nx = 200     # number of elements per side
 ny = 100     # number of elements per side
 dx = 2       # ND size of the side
@@ -10,7 +13,7 @@ M = 1       # Initial mobility, depends on swell ratio
 Cn = 5e-2  # Cahn number
 k = ${fparse Cn^2}    # gradient energy coefficient
 
-# Flory-Huggins approximation
+# Flory-Huggins constants used to build the Taylor approximation below.
 chi12 = 1.0   # Flory-Huggins parameter
 # chi13 = 10.0   # Flory-Huggins parameter
 # chi23 = 10.0   # Flory-Huggins parameter
@@ -19,6 +22,7 @@ chi12 = 1.0   # Flory-Huggins parameter
 # N3 = 100     # Penalty term for void
 # R = 1  # Universal gas constant
 # T = 1 # Temperature in Kelvin
+# Polynomial coefficients for the Taylor-expanded free energy.
 p = -1.38629e-1      # 0th coefficient of taylor function
 q = 0               # 1st coefficient of taylor function
 r = 0.4            # 2nd coefficient of taylor function

@@ -1,3 +1,5 @@
+# Mechanical pull test driven by a saved three-phase composition field.
+# The material stiffness depends on c1 and c2 read from the prior chemistry run.
 nx = 102     # number of elements in x
 ny = 100     # number of elements in y
 # dx = 1.02       # ND size of the side in x
@@ -270,4 +272,3 @@ dy = 1.00       # ND size of the side in y
         show = 'reaction_force_x avg_disp_right'
       []
   []
-

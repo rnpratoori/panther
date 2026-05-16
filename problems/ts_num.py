@@ -1,3 +1,5 @@
+"""Print timestep counts and time ranges for Exodus files in the current folder."""
+
 from netCDF4 import Dataset
 import glob
 
